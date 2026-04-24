@@ -11,7 +11,7 @@ export default function LoginScreen() {
   const { setTokens } = useAuthStore();
 
   useEffect(() => {
-    const sub = Linking.addEventListener('url', async ({ url }) => {
+    const sub = Linking.addEventListener('url', async ({ url }: { url: string }) => {
       const parsed = Linking.parse(url);
       const code = parsed.queryParams?.code as string;
       const state = parsed.queryParams?.state as string;

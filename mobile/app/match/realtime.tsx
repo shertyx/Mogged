@@ -38,9 +38,9 @@ export default function RealtimeMatchScreen() {
     }
     const token = await SecureStore.getItemAsync('access_token');
     setPhase('searching');
-    const socket = new WebSocket(`${WS_URL}/matchmaking`, undefined, {
-      headers: { Authorization: `Bearer ${token}` },
-    } as any);
+    const socket = new WebSocket(
+      `${WS_URL}/matchmaking?token=${encodeURIComponent(token ?? '')}`
+    );
     ws.current = socket;
 
     socket.onmessage = (e) => {
