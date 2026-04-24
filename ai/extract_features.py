@@ -50,7 +50,8 @@ def _golden_ratio_score(pts: np.ndarray) -> float:
     if face_height == 0:
         return 50.0
     ratio = face_width / face_height
-    deviation = abs(ratio - 0.618)
+    golden = 0.618
+    deviation = abs(ratio - golden)
     return normalize_score(deviation, 0.4, 0.0)
 
 

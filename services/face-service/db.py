@@ -1,4 +1,6 @@
+import json
 import psycopg2
+from psycopg2.extras import RealDictCursor
 
 
 class DBClient:
@@ -38,10 +40,15 @@ class DBClient:
                     ON CONFLICT (photo_hash) DO NOTHING
                     """,
                     (
-                        photo_hash, photo_id, chad_score,
-                        features["symmetry"], features["golden_ratio"],
-                        features["jawline"], features["eyes"],
-                        features["nose"], features["forehead"],
+                        photo_hash,
+                        photo_id,
+                        chad_score,
+                        features["symmetry"],
+                        features["golden_ratio"],
+                        features["jawline"],
+                        features["eyes"],
+                        features["nose"],
+                        features["forehead"],
                     ),
                 )
             conn.commit()

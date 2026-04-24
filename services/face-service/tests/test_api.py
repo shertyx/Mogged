@@ -1,50 +1,49 @@
 import pytest
+from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, patch
-import importlib
 
 
 def make_client():
-    with patch("pipeline.AnalysisPipeline") as MockPipeline, \
-         patch("pipeline.DBClient"), \
-         patch("pipeline.StorageClient"), \
-         patch("builtins.__import__", side_effect=lambda name, *args, **kwargs: __import__(name, *args, **kwargs)):
+    with patch("main.AnalysisPipeline") as MockPipeline, \
+         patch("main.DBClient"), \
+         patch("main.StorageClient"), \
+         patch("main.joblib"):
         mock_pipeline_instance = MagicMock()
         MockPipeline.return_value = mock_pipeline_instance
-
-        import main
-        importlib.reload(main)
-        from fastapi.testclient import TestClient
-        return TestClient(main.app), mock_pipeline_instance
+        from main import app
+        return TestClient(app), mock_pipeline_instance
 
 
 def test_health():
-    with patch.dict("os.environ", {
-        "POSTGRES_DSN": "postgresql://u:p@localhost/db",
-        "MINIO_ENDPOINT": "localhost:9000",
-        "MINIO_ROOT_USER": "key",
-        "MINIO_ROOT_PASSWORD": "secret",
-        "MINIO_BUCKET": "bucket",
-    }), patch("main.DBClient"), patch("main.StorageClient"), patch("main.joblib"), patch("main.AnalysisPipeline"):
-        import main
-        importlib.reload(main)
-        from fastapi.testclient import TestClient
-        client = TestClient(main.app)
-        response = client.get("/health")
-        assert response.status_code == 200
-        assert response.json()["status"] == "ok"
+    client, _ = make_client()
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
 
 
 def test_upload_photo_missing_file():
-    with patch.dict("os.environ", {
-        "POSTGRES_DSN": "postgresql://u:p@localhost/db",
-        "MINIO_ENDPOINT": "localhost:9000",
-        "MINIO_ROOT_USER": "key",
-        "MINIO_ROOT_PASSWORD": "secret",
-        "MINIO_BUCKET": "bucket",
-    }), patch("main.DBClient"), patch("main.StorageClient"), patch("main.joblib"), patch("main.AnalysisPipeline"):
-        import main
-        importlib.reload(main)
-        from fastapi.testclient import TestClient
-        client = TestClient(main.app)
-        response = client.post("/photos/analyze", data={"photo_id": "uuid-1"})
-        assert response.status_code == 422
+    client, _ = make_client()
+    response = client.post("/photos/analyze", data={"photo_id": "uuid-1"})
+    assert response.status_code == 422
+
+
+def test_upload_photo_success():
+    client, mock_pipeline = make_client()
+    mock_pipeline.analyse_photo.return_value = {
+        "chad_score": 82.0,
+        "features": {"symmetry": 80.0, "golden_ratio": 70.0,
+                     "jawline": 75.0, "eyes": 60.0, "nose": 80.0, "forehead": 65.0},
+        "signed_url": "http://minio/signed",
+    }
+    import io
+    fake_image = io.BytesIO(b"fakeimagebytes")
+    response = client.post(
+        "/photos/analyze",
+        data={"photo_id": "uuid-1"},
+        files={"file": ("test.jpg", fake_image, "image/jpeg")},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["chad_score"] == 82.0
+    assert "features" in body
+    assert "signed_url" in body

@@ -1,10 +1,14 @@
 import cv2
 import numpy as np
+import joblib
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent / "ai"))
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "ai"))
+# En local : ai/ est 3 niveaux au dessus. En Docker : extract_features.py est copié dans /app/
+_ai_path = Path(__file__).parent.parent.parent / "ai"
+if _ai_path.exists():
+    sys.path.insert(0, str(_ai_path))
+
 from extract_features import extract_features
 
 from db import DBClient
@@ -31,12 +35,18 @@ class AnalysisPipeline:
             raise ValueError("Cannot decode image")
 
         img = cv2.resize(img, (224, 224))
+
         features = extract_features(img)
         feature_vector = np.array([list(features.values())])
-        chad_score = float(np.clip(self._model.predict(feature_vector)[0], 0.0, 100.0))
+        chad_score = float(self._model.predict(feature_vector)[0])
+        chad_score = float(np.clip(chad_score, 0.0, 100.0))
 
         s3_key = self._storage.upload_photo(image_bytes, hash_md5, ext)
         self._db.save_score(hash_md5, photo_id, chad_score, features)
         signed_url = self._storage.get_signed_url(s3_key)
 
-        return {"chad_score": chad_score, "features": features, "signed_url": signed_url}
+        return {
+            "chad_score": chad_score,
+            "features": features,
+            "signed_url": signed_url,
+        }

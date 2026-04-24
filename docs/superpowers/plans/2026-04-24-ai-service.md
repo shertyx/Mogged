@@ -40,7 +40,7 @@ services/face-service/
 **Files:**
 - Create: `ai/requirements-ai.txt`
 
-- [ ] **Step 1: Créer requirements-ai.txt**
+- [x] **Step 1: Créer requirements-ai.txt**
 
 ```
 dlib==19.24.4
@@ -53,7 +53,7 @@ matplotlib==3.8.4
 requests==2.31.0
 ```
 
-- [ ] **Step 2: Créer un venv et installer**
+- [x] **Step 2: Créer un venv et installer**
 
 ```bash
 cd ai
@@ -64,7 +64,7 @@ pip install -r requirements-ai.txt
 
 Attendu : installation sans erreur. dlib peut prendre 5-10 minutes à compiler.
 
-- [ ] **Step 3: Vérifier dlib**
+- [x] **Step 3: Vérifier dlib**
 
 ```bash
 python3 -c "import dlib; print(dlib.__version__)"
@@ -72,7 +72,7 @@ python3 -c "import dlib; print(dlib.__version__)"
 
 Attendu : `19.24.4`
 
-- [ ] **Step 4: Télécharger le modèle dlib 68 landmarks**
+- [x] **Step 4: Télécharger le modèle dlib 68 landmarks**
 
 ```bash
 mkdir -p models
@@ -82,7 +82,7 @@ bunzip2 models/shape_predictor_68_face_landmarks.dat.bz2
 
 Attendu : fichier `models/shape_predictor_68_face_landmarks.dat` (~95MB).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd ..
@@ -98,7 +98,7 @@ git commit -m "chore: add ai requirements"
 - Create: `ai/extract_features.py`
 - Create: `ai/tests/test_extract_features.py`
 
-- [ ] **Step 1: Écrire le test**
+- [x] **Step 1: Écrire le test**
 
 Créer `ai/tests/__init__.py` (vide) et `ai/tests/test_extract_features.py` :
 
@@ -136,7 +136,7 @@ def test_extract_features_keys():
         assert 0.0 <= v <= 100.0
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 cd ai && source .venv/bin/activate
@@ -145,7 +145,7 @@ python3 -m pytest tests/test_extract_features.py -v
 
 Attendu : `ImportError: No module named 'extract_features'`
 
-- [ ] **Step 3: Implémenter extract_features.py**
+- [x] **Step 3: Implémenter extract_features.py**
 
 ```python
 import cv2
@@ -266,7 +266,7 @@ def extract_features(img: np.ndarray) -> dict[str, float]:
     }
 ```
 
-- [ ] **Step 4: Lancer les tests**
+- [x] **Step 4: Lancer les tests**
 
 ```bash
 python3 -m pytest tests/test_extract_features.py -v
@@ -274,7 +274,7 @@ python3 -m pytest tests/test_extract_features.py -v
 
 Attendu : 3 tests PASS (`test_normalize_score_clamps`, `test_normalize_score_out_of_range`, `test_extract_features_returns_dict`). Le test `test_extract_features_keys` est skipped sans `TEST_FACE_IMAGE`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd ..
@@ -290,7 +290,7 @@ git commit -m "feat(ai): add facial feature extraction with dlib landmarks"
 - Create: `ai/train.py`
 - Create: `ai/evaluate.py`
 
-- [ ] **Step 1: Télécharger Chicago Face Database**
+- [x] **Step 1: Télécharger Chicago Face Database**
 
 Aller sur https://chicagofaces.org/ → télécharger le dataset (requiert inscription gratuite).
 Placer les images dans `ai/datasets/CFD/` et le fichier de ratings `CFD Norming Data.xlsx` dans `ai/datasets/`.
@@ -304,7 +304,7 @@ ai/datasets/
     ├── ...
 ```
 
-- [ ] **Step 2: Créer train.py**
+- [x] **Step 2: Créer train.py**
 
 ```python
 import os
@@ -391,7 +391,7 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 3: Créer evaluate.py**
+- [x] **Step 3: Créer evaluate.py**
 
 ```python
 import joblib
@@ -419,7 +419,7 @@ if __name__ == "__main__":
         evaluate(str(p))
 ```
 
-- [ ] **Step 4: Lancer l'entraînement**
+- [x] **Step 4: Lancer l'entraînement**
 
 ```bash
 cd ai && source .venv/bin/activate
@@ -437,7 +437,7 @@ R² on test set: X.XXXX
 
 Un R² > 0.3 est acceptable pour une première version. Si < 0.1, vérifier que les colonnes du fichier Excel correspondent (ouvrir le fichier et inspecter les noms de colonnes réels).
 
-- [ ] **Step 5: Évaluer le modèle**
+- [x] **Step 5: Évaluer le modèle**
 
 ```bash
 python3 evaluate.py models/model_v1.joblib
@@ -445,7 +445,7 @@ python3 evaluate.py models/model_v1.joblib
 
 Attendu : affichage MAE et R².
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 cd ..
@@ -460,7 +460,7 @@ git commit -m "feat(ai): add training pipeline and evaluation script"
 **Files:**
 - Modify: `services/face-service/requirements.txt`
 
-- [ ] **Step 1: Mettre à jour requirements.txt**
+- [x] **Step 1: Mettre à jour requirements.txt**
 
 ```
 fastapi==0.111.0
@@ -476,7 +476,7 @@ boto3==1.34.84
 python-multipart==0.0.9
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add services/face-service/requirements.txt
@@ -491,7 +491,7 @@ git commit -m "chore(face-service): add full python dependencies"
 - Create: `services/face-service/storage.py`
 - Create: `services/face-service/tests/test_storage.py`
 
-- [ ] **Step 1: Écrire le test**
+- [x] **Step 1: Écrire le test**
 
 ```python
 import pytest
@@ -537,7 +537,7 @@ def test_delete_photo_calls_delete():
         )
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 cd services/face-service
@@ -546,7 +546,7 @@ python3 -m pytest tests/test_storage.py -v
 
 Attendu : `ImportError: No module named 'storage'`
 
-- [ ] **Step 3: Implémenter storage.py**
+- [x] **Step 3: Implémenter storage.py**
 
 ```python
 import boto3
@@ -580,7 +580,7 @@ class StorageClient:
         self._s3.delete_object(Bucket=self._bucket, Key=key)
 ```
 
-- [ ] **Step 4: Lancer les tests**
+- [x] **Step 4: Lancer les tests**
 
 ```bash
 python3 -m pytest tests/test_storage.py -v
@@ -588,7 +588,7 @@ python3 -m pytest tests/test_storage.py -v
 
 Attendu : 3 tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd ../..
@@ -604,7 +604,7 @@ git commit -m "feat(face-service): add minio storage client"
 - Create: `services/face-service/db.py`
 - Create: `services/face-service/tests/test_db.py`
 
-- [ ] **Step 1: Écrire le test**
+- [x] **Step 1: Écrire le test**
 
 ```python
 import pytest
@@ -659,7 +659,7 @@ def test_save_score_inserts_row():
         mock_conn.commit.assert_called_once()
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 python3 -m pytest tests/test_db.py -v
@@ -667,7 +667,7 @@ python3 -m pytest tests/test_db.py -v
 
 Attendu : `ImportError: No module named 'db'`
 
-- [ ] **Step 3: Implémenter db.py**
+- [x] **Step 3: Implémenter db.py**
 
 ```python
 import json
@@ -726,7 +726,7 @@ class DBClient:
             conn.commit()
 ```
 
-- [ ] **Step 4: Lancer les tests**
+- [x] **Step 4: Lancer les tests**
 
 ```bash
 python3 -m pytest tests/test_db.py -v
@@ -734,7 +734,7 @@ python3 -m pytest tests/test_db.py -v
 
 Attendu : 3 tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd ../..
@@ -750,7 +750,7 @@ git commit -m "feat(face-service): add postgres db client for score cache"
 - Create: `services/face-service/pipeline.py`
 - Create: `services/face-service/tests/test_pipeline.py`
 
-- [ ] **Step 1: Écrire le test**
+- [x] **Step 1: Écrire le test**
 
 ```python
 import pytest
@@ -802,7 +802,7 @@ def test_analyse_photo_runs_pipeline_on_cache_miss():
     mock_storage.upload_photo.assert_called_once()
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 python3 -m pytest tests/test_pipeline.py -v
@@ -810,7 +810,7 @@ python3 -m pytest tests/test_pipeline.py -v
 
 Attendu : `ImportError: No module named 'pipeline'`
 
-- [ ] **Step 3: Implémenter pipeline.py**
+- [x] **Step 3: Implémenter pipeline.py**
 
 ```python
 import cv2
@@ -864,7 +864,7 @@ class AnalysisPipeline:
         }
 ```
 
-- [ ] **Step 4: Lancer les tests**
+- [x] **Step 4: Lancer les tests**
 
 ```bash
 python3 -m pytest tests/test_pipeline.py -v
@@ -872,7 +872,7 @@ python3 -m pytest tests/test_pipeline.py -v
 
 Attendu : 2 tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd ../..
@@ -888,7 +888,7 @@ git commit -m "feat(face-service): add analysis pipeline with cache"
 - Modify: `services/face-service/main.py`
 - Create: `services/face-service/tests/test_api.py`
 
-- [ ] **Step 1: Écrire le test**
+- [x] **Step 1: Écrire le test**
 
 ```python
 import pytest
@@ -942,7 +942,7 @@ def test_upload_photo_success():
     assert "signed_url" in body
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 python3 -m pytest tests/test_api.py -v
@@ -950,7 +950,7 @@ python3 -m pytest tests/test_api.py -v
 
 Attendu : tests API échouent (routes non implémentées).
 
-- [ ] **Step 3: Réécrire main.py**
+- [x] **Step 3: Réécrire main.py**
 
 ```python
 import hashlib
@@ -1009,7 +1009,7 @@ async def analyze_photo(
     return result
 ```
 
-- [ ] **Step 4: Lancer les tests**
+- [x] **Step 4: Lancer les tests**
 
 ```bash
 python3 -m pytest tests/test_api.py -v
@@ -1017,7 +1017,7 @@ python3 -m pytest tests/test_api.py -v
 
 Attendu : 3 tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd ../..
@@ -1029,20 +1029,20 @@ git commit -m "feat(face-service): add photo upload and analysis endpoint"
 
 ### Task 9: Vérification end-to-end dans Docker
 
-- [ ] **Step 1: Copier le modèle entraîné**
+- [x] **Step 1: Copier le modèle entraîné**
 
 ```bash
 cp ai/models/model_v1.joblib ai/models/
 # Le docker-compose monte ai/models/ dans face-service en lecture seule
 ```
 
-- [ ] **Step 2: Builder et démarrer**
+- [x] **Step 2: Builder et démarrer**
 
 ```bash
 docker compose up --build -d face-service postgres minio
 ```
 
-- [ ] **Step 3: Tester le health check**
+- [x] **Step 3: Tester le health check**
 
 ```bash
 curl http://localhost:8000/health
@@ -1050,7 +1050,7 @@ curl http://localhost:8000/health
 
 Attendu : `{"status":"ok","service":"face-service"}`
 
-- [ ] **Step 4: Tester l'analyse avec une vraie photo**
+- [x] **Step 4: Tester l'analyse avec une vraie photo**
 
 ```bash
 curl -X POST http://localhost:8000/photos/analyze \
@@ -1060,13 +1060,13 @@ curl -X POST http://localhost:8000/photos/analyze \
 
 Attendu : JSON avec `chad_score`, `features`, `signed_url`.
 
-- [ ] **Step 5: Arrêter**
+- [x] **Step 5: Arrêter**
 
 ```bash
 docker compose down
 ```
 
-- [ ] **Step 6: Commit final**
+- [x] **Step 6: Commit final**
 
 ```bash
 git add .

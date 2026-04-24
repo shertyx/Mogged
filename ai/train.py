@@ -1,51 +1,59 @@
-import os
-import cv2
+"""
+Entraînement multi-dataset. Utilise tous les datasets disponibles automatiquement.
+Datasets supportés : SCUT-FBP5500 (auto), CFD (manuel), MEBeauty (auto).
+"""
 import joblib
 import numpy as np
-import pandas as pd
 from pathlib import Path
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 
-import sys
-sys.path.insert(0, str(Path(__file__).parent))
-from extract_features import extract_features
+from datasets import load_scut_fbp5500, load_cfd, load_mebeauty
 
-DATASET_DIR = Path("datasets/CFD")
-RATINGS_FILE = Path("datasets/CFD Norming Data.xlsx")
 MODEL_OUT = Path("models/model_v1.joblib")
 
 
-def load_dataset() -> tuple[np.ndarray, np.ndarray]:
-    df = pd.read_excel(RATINGS_FILE, sheet_name=0)
-    df = df[["Target", "Attractive"]].dropna()
+def load_all_datasets() -> tuple[np.ndarray, np.ndarray]:
+    X_all, y_all = [], []
 
-    X, y = [], []
-    for _, row in df.iterrows():
-        img_name = str(row["Target"]).strip()
-        for ext in [".jpg", ".JPG", ".png"]:
-            img_path = DATASET_DIR / (img_name + ext)
-            if img_path.exists():
-                break
-        else:
-            continue
+    # SCUT-FBP5500 — téléchargement auto HuggingFace
+    print("=== SCUT-FBP5500 ===")
+    try:
+        X, y = load_scut_fbp5500()
+        print(f"  → {len(X)} samples chargés")
+        X_all.append(X)
+        y_all.append(y)
+    except Exception as e:
+        print(f"  SKIP: {e}")
 
-        img = cv2.imread(str(img_path))
-        if img is None:
-            continue
+    # Chicago Face Database — manuel
+    print("=== Chicago Face Database ===")
+    try:
+        X, y = load_cfd()
+        print(f"  → {len(X)} samples chargés")
+        X_all.append(X)
+        y_all.append(y)
+    except FileNotFoundError as e:
+        print(f"  SKIP (non téléchargé): {e}")
+    except Exception as e:
+        print(f"  SKIP: {e}")
 
-        try:
-            features = extract_features(img)
-        except ValueError:
-            continue
+    # MEBeauty — téléchargement auto HuggingFace
+    print("=== MEBeauty ===")
+    try:
+        X, y = load_mebeauty()
+        print(f"  → {len(X)} samples chargés")
+        X_all.append(X)
+        y_all.append(y)
+    except Exception as e:
+        print(f"  SKIP: {e}")
 
-        X.append(list(features.values()))
-        # Normaliser attractiveness (1-7 dans CFD) vers 0-100
-        y.append((float(row["Attractive"]) - 1) / 6 * 100)
+    if not X_all:
+        raise RuntimeError("Aucun dataset disponible. Vérifier la connexion ou les fichiers.")
 
-    return np.array(X), np.array(y)
+    return np.vstack(X_all), np.concatenate(y_all)
 
 
 def train(X: np.ndarray, y: np.ndarray) -> Pipeline:
@@ -58,9 +66,9 @@ def train(X: np.ndarray, y: np.ndarray) -> Pipeline:
 
 
 def main():
-    print("Loading dataset...")
-    X, y = load_dataset()
-    print(f"Loaded {len(X)} samples")
+    print("Loading datasets...")
+    X, y = load_all_datasets()
+    print(f"\nTotal: {len(X)} samples sur {X.shape[1]} features")
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 

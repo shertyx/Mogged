@@ -1,14 +1,15 @@
+"""Compare les métriques MAE + R² entre versions de modèles."""
 import joblib
 import numpy as np
 from pathlib import Path
 from sklearn.metrics import mean_absolute_error, r2_score
-from train import load_dataset
 from sklearn.model_selection import train_test_split
+from train import load_all_datasets
 
 
 def evaluate(model_path: str):
     model = joblib.load(model_path)
-    X, y = load_dataset()
+    X, y = load_all_datasets()
     _, X_test, _, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     y_pred = model.predict(X_test)
     print(f"Model: {model_path}")
