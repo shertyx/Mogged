@@ -75,6 +75,7 @@ Tous les services doivent être `Up` :
 
 | Service       | Port                        |
 |---------------|-----------------------------|
+| **web**       | http://localhost:3000        |
 | api-gateway   | http://localhost:8080        |
 | auth-service  | http://localhost:8081        |
 | user-service  | http://localhost:8082        |
@@ -85,13 +86,15 @@ Tous les services doivent être `Up` :
 
 ### 5. Frontend web
 
+Le web est inclus dans `docker compose up` — accessible sur [http://localhost:3000](http://localhost:3000).
+
+Pour le développement local (hot reload) :
+
 ```bash
 cd web
 npm install
 npm run dev
 ```
-
-Ouvre [http://localhost:3000](http://localhost:3000)
 
 ### 6. Frontend mobile
 

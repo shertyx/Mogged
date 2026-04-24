@@ -111,6 +111,13 @@ services:
     volumes:
       - ./ai/models:/app/models:ro
 
+  web:
+    build: ./web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
+
 volumes:
   postgres_data:
   minio_data:
