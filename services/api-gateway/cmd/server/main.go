@@ -1,9 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 	"os"
+
+	"github.com/mogged/api-gateway/handler"
+	"github.com/mogged/api-gateway/middleware"
 )
 
 func main() {
@@ -11,8 +14,33 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, `{"status":"ok","service":"api-gateway"}`)
+	jwtSecret := os.Getenv("JWT_SECRET")
+	authURL := os.Getenv("AUTH_SERVICE_URL")
+	userURL := os.Getenv("USER_SERVICE_URL")
+	eloURL := os.Getenv("ELO_SERVICE_URL")
+	faceURL := os.Getenv("FACE_SERVICE_URL")
+
+	mq := handler.NewMatchQueue()
+	mux := http.NewServeMux()
+
+	// public
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
 	})
-	http.ListenAndServe(":"+port, nil)
+	mux.Handle("/auth/", handler.NewReverseProxy(authURL))
+
+	// protected
+	protected := http.NewServeMux()
+	protected.Handle("/user/", handler.NewReverseProxy(userURL))
+	protected.Handle("/elo/", handler.NewReverseProxy(eloURL))
+	protected.Handle("/face/", handler.NewReverseProxy(faceURL))
+	protected.HandleFunc("/matchmaking", mq.HandleMatchmaking(eloURL))
+
+	mux.Handle("/user/", middleware.JWTAuth(jwtSecret, protected))
+	mux.Handle("/elo/", middleware.JWTAuth(jwtSecret, protected))
+	mux.Handle("/face/", middleware.JWTAuth(jwtSecret, protected))
+	mux.Handle("/matchmaking", middleware.JWTAuth(jwtSecret, protected))
+
+	log.Printf("api-gateway listening on :%s", port)
+	log.Fatal(http.ListenAndServe(":"+port, mux))
 }
