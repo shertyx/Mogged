@@ -1,0 +1,43 @@
+.card {
+  position: relative;
+  aspect-ratio: 1;
+  background: #1a1a1a;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.selected { border-color: #fff; }
+
+.score {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(200,0,0,0.85);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.pending { color: #555; font-size: 12px; }
