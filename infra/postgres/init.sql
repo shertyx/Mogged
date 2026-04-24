@@ -62,6 +62,9 @@ CREATE TABLE IF NOT EXISTS elo.matches (
     winner UUID REFERENCES auth.users(id),
     elo_change_a INT,
     elo_change_b INT,
+    mode VARCHAR(10) NOT NULL DEFAULT 'realtime',
+    status VARCHAR(10) NOT NULL DEFAULT 'pending',
+    expires_at TIMESTAMP,
     played_at TIMESTAMP DEFAULT NOW()
 );
 

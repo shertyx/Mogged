@@ -131,7 +131,11 @@ Photo reçue (max 5MB)
 ### Tiers (par score ELO)
 Bronze → Silver → Gold → Platinum → Diamond → Master → Grandmaster → Top 500
 
-### Matchmaking — Flow temps réel (WebSocket)
+Les deux modes (temps réel et async) donnent de l'ELO selon la même formule.
+
+---
+
+### Mode 1 — Temps réel (WebSocket)
 ```
 Joueur A → WS /ws/matchmaking → rejoint queue
 Joueur B → WS /ws/matchmaking → match trouvé (ELO proche)
@@ -141,7 +145,7 @@ Les 2 joueurs choisissent 3 photos parmi leurs photos stockées
 
 Round 1 :
   → Chaque joueur voit la photo adverse du round
-  → Vainqueur = photo avec chad_score le plus élevé (automatique, pas de vote)
+  → Vainqueur = photo avec chad_score le plus élevé (automatique)
   → Photo utilisée supprimée
 
 Round 2, Round 3 si nécessaire (best of 3)
@@ -153,14 +157,44 @@ Fin du match :
   → "match_end" envoyé aux 2 joueurs avec nouveau ELO
 ```
 
-### Timeout
-- Match limité à **5 minutes**
-- Si un joueur ne répond pas → forfait → adversaire gagne → ELO calculé normalement
+**Timeout :** 5 minutes — si un joueur ne répond pas → forfait → adversaire gagne ELO normalement.
 
-### Règles métier
-- ELO gagnable **uniquement via matchmaking** (pas d'autres modes)
-- Une photo ne peut être utilisée qu'une seule fois en matchmaking
-- Classement global (pas de segmentation géographique)
+---
+
+### Mode 2 — Async (défi 24h)
+```
+Joueur A → POST /matches/challenge/{player_b_id}
+  → choisit ses 3 photos
+  → match créé en DB avec statut "pending"
+  → Joueur B notifié (push notification ou polling)
+
+Joueur B a 24h pour :
+  → accepter le défi
+  → choisir ses 3 photos
+  → match passe au statut "ready"
+
+Une fois les 2 joueurs prêts :
+  → rounds calculés automatiquement (chad_score, même logique que temps réel)
+  → résultat disponible immédiatement
+  → ELO recalculé pour les 2 joueurs
+  → match passe au statut "completed"
+
+Si Joueur B n'accepte pas dans les 24h :
+  → défi expiré, aucun ELO échangé, photos de A restituées (non supprimées)
+```
+
+**Statuts d'un match async :** `pending` → `ready` → `completed` | `expired`
+
+---
+
+### Règles communes aux deux modes
+- Vainqueur d'un round = photo avec chad_score le plus élevé (automatique, pas de vote humain)
+- Best of 3 rounds → 2 rounds gagnés = vainqueur du match
+- ELO recalculé après chaque match (formule standard, K=32 ajustable)
+- Une photo utilisée dans un match est **définitivement supprimée** après les rounds joués
+- Si défi async expiré : photos de A non supprimées (le défi n'a pas eu lieu)
+- Une photo ne peut être utilisée qu'une seule fois en matchmaking (tous modes confondus)
+- Classement global unique (pas de segmentation géographique)
 
 ---
 
