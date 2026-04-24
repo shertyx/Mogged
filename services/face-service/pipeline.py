@@ -3,6 +3,7 @@ import numpy as np
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent / "ai"))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "ai"))
 from extract_features import extract_features
 

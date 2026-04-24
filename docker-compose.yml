@@ -91,7 +91,9 @@ services:
         condition: service_healthy
 
   face-service:
-    build: ./services/face-service
+    build:
+      context: .
+      dockerfile: services/face-service/Dockerfile
     ports:
       - "8000:8000"
     environment:
