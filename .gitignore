@@ -1,0 +1,20 @@
+# Env
+.env
+
+# Go
+services/*/bin/
+*.exe
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+ai/models/*.joblib
+ai/datasets/
+
+# Docker
+.docker/
+
+# IDE
+.idea/
+.vscode/
