@@ -37,13 +37,11 @@ def health():
 
 @app.post("/face/photos/analyze")
 @app.post("/photos/analyze")
-async def analyze_photo(
+async def upload_photo(
     request: Request,
     file: UploadFile = File(...),
 ):
-    if _model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
-
+    """Upload photo and register in user-service — no ML analysis."""
     user_id = request.headers.get("X-User-ID", "")
     if not user_id:
         raise HTTPException(status_code=401, detail="missing user id")
@@ -54,38 +52,20 @@ async def analyze_photo(
 
     hash_md5 = hashlib.md5(contents).hexdigest()
     ext = (file.filename or "jpg").rsplit(".", 1)[-1].lower()
+    s3_key = _storage.upload_photo(contents, hash_md5, ext)
 
-    # Register photo in user-service to get photo_id
     async with httpx.AsyncClient() as client:
         reg_resp = await client.post(
             f"{_user_service_url}/user/photos/register",
-            json={"s3_key": f"photos/{hash_md5}.{ext}", "hash": hash_md5},
+            json={"s3_key": s3_key, "hash": hash_md5},
             headers={"X-User-ID": user_id},
         )
         if reg_resp.status_code not in (200, 201):
             raise HTTPException(status_code=502, detail=f"RegisterUpload failed: {reg_resp.text}")
         photo_id = reg_resp.json()["photo_id"]
 
-    # Analyse photo
-    try:
-        result = _pipeline.analyse_photo(contents, hash_md5, ext, photo_id)
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
-
-    # Store score in user-service (features as JSON string → []byte on Go side)
-    async with httpx.AsyncClient() as client:
-        score_resp = await client.patch(
-            f"{_user_service_url}/user/photos/score",
-            json={
-                "photo_id": photo_id,
-                "score": result["chad_score"],
-                "features": result["features"],
-            },
-        )
-        if score_resp.status_code not in (200, 201, 204):
-            raise HTTPException(status_code=502, detail=f"UpdatePhotoScore failed: {score_resp.text}")
-
-    return {**result, "photo_id": photo_id}
+    signed_url = _storage.get_signed_url(s3_key)
+    return {"photo_id": photo_id, "s3_key": s3_key, "signed_url": signed_url}
 
 
 @app.post("/face/photos/analyze-stored")
@@ -95,6 +75,7 @@ async def analyze_stored_photo(
     photo_id: str = Form(...),
     s3_key: str = Form(...),
 ):
+    """Run ML analysis on a photo already stored in MinIO."""
     if _model is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
 
