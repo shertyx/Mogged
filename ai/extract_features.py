@@ -47,12 +47,13 @@ def _symmetry_score(pts: np.ndarray) -> float:
 def _golden_ratio_score(pts: np.ndarray) -> float:
     face_width = float(np.linalg.norm(pts[0] - pts[16]))
     face_height = float(np.linalg.norm(pts[8] - pts[27]))
-    if face_height == 0:
+    if face_width == 0:
         return 50.0
-    ratio = face_width / face_height
-    golden = 0.618
+    # height/width should be close to golden ratio 1.618
+    ratio = face_height / face_width
+    golden = 1.618
     deviation = abs(ratio - golden)
-    return normalize_score(deviation, 0.4, 0.0)
+    return normalize_score(deviation, 0.5, 0.0)
 
 
 def _jawline_score(pts: np.ndarray) -> float:
