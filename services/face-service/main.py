@@ -2,7 +2,7 @@ import hashlib
 import os
 import httpx
 import joblib
-from fastapi import FastAPI, UploadFile, File, HTTPException, Request
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from dotenv import load_dotenv
 
 from pipeline import AnalysisPipeline
@@ -73,6 +73,48 @@ async def analyze_photo(
         raise HTTPException(status_code=422, detail=str(e))
 
     # Store score in user-service (features as JSON string → []byte on Go side)
+    async with httpx.AsyncClient() as client:
+        score_resp = await client.patch(
+            f"{_user_service_url}/user/photos/score",
+            json={
+                "photo_id": photo_id,
+                "score": result["chad_score"],
+                "features": result["features"],
+            },
+        )
+        if score_resp.status_code not in (200, 201, 204):
+            raise HTTPException(status_code=502, detail=f"UpdatePhotoScore failed: {score_resp.text}")
+
+    return {**result, "photo_id": photo_id}
+
+
+@app.post("/face/photos/analyze-stored")
+@app.post("/photos/analyze-stored")
+async def analyze_stored_photo(
+    request: Request,
+    photo_id: str = Form(...),
+    s3_key: str = Form(...),
+):
+    if _model is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
+    user_id = request.headers.get("X-User-ID", "")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="missing user id")
+
+    try:
+        contents = _storage.download_photo(s3_key)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Photo not found in storage: {e}")
+
+    hash_md5 = hashlib.md5(contents).hexdigest()
+    ext = s3_key.rsplit(".", 1)[-1].lower() if "." in s3_key else "jpg"
+
+    try:
+        result = _pipeline.analyse_photo(contents, hash_md5, ext, photo_id)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
     async with httpx.AsyncClient() as client:
         score_resp = await client.patch(
             f"{_user_service_url}/user/photos/score",

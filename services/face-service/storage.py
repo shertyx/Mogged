@@ -25,5 +25,9 @@ class StorageClient:
             ExpiresIn=expiry,
         )
 
+    def download_photo(self, key: str) -> bytes:
+        response = self._s3.get_object(Bucket=self._bucket, Key=key)
+        return response["Body"].read()
+
     def delete_photo(self, key: str) -> None:
         self._s3.delete_object(Bucket=self._bucket, Key=key)
