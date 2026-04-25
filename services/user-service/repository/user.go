@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 
 	_ "github.com/lib/pq"
 )
@@ -27,19 +28,23 @@ func NewUserRepo(db *sql.DB) *UserRepo {
 
 func (r *UserRepo) GetProfile(userID string) (map[string]interface{}, error) {
 	row := r.db.QueryRow(`
-		SELECT id, username, avatar_url, consent_ai FROM users.profiles WHERE id = $1
+		SELECT id, username, avatar_url, consent_ai, username_set
+		FROM users.profiles WHERE id = $1
 	`, userID)
 	var id, username string
 	var avatarURL *string
-	var consentAI bool
-	if err := row.Scan(&id, &username, &avatarURL, &consentAI); err == sql.ErrNoRows {
+	var consentAI, usernameSet bool
+	if err := row.Scan(&id, &username, &avatarURL, &consentAI, &usernameSet); err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
 		return nil, err
 	}
 	return map[string]interface{}{
-		"id": id, "username": username,
-		"avatar_url": avatarURL, "consent_ai": consentAI,
+		"id":           id,
+		"username":     username,
+		"avatar_url":   avatarURL,
+		"consent_ai":   consentAI,
+		"username_set": usernameSet,
 	}, nil
 }
 
@@ -50,6 +55,25 @@ func (r *UserRepo) UpsertProfile(userID, username string, consentAI bool) error 
 		ON CONFLICT (id) DO UPDATE SET username = $2, consent_ai = $3, updated_at = NOW()
 	`, userID, username, consentAI)
 	return err
+}
+
+func (r *UserRepo) SetUsername(userID, username string) error {
+	res, err := r.db.Exec(`
+		UPDATE users.profiles
+		SET username = $2, username_set = TRUE, updated_at = NOW()
+		WHERE id = $1 AND username_set = FALSE
+	`, userID, username)
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return fmt.Errorf("username already set")
+	}
+	return nil
 }
 
 func (r *UserRepo) CountPhotos(userID string) (int, error) {
