@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
-import { usePhotosStore } from '@/store/photos';
+import { usePhotosStore, type Photo } from '@/store/photos';
 import { listPhotos, deletePhoto } from '@/api/user';
-import { uploadPhoto, analyzeStoredPhoto } from '@/api/face';
+import { uploadPhoto, analyzeStoredPhoto, getSignedUrls } from '@/api/face';
 
 export function usePhotos() {
   const { photos, loading, analyzingIds, setPhotos, setLoading, removePhoto, updatePhoto, setAnalyzing } = usePhotosStore();
@@ -9,8 +9,14 @@ export function usePhotos() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await listPhotos();
-      setPhotos(data ?? []);
+      const data: Photo[] = (await listPhotos()) ?? [];
+      if (data.length > 0) {
+        const keys = data.map((p) => p.s3_key);
+        const urls = await getSignedUrls(keys);
+        setPhotos(data.map((p) => ({ ...p, signed_url: urls[p.s3_key] })));
+      } else {
+        setPhotos([]);
+      }
     } finally {
       setLoading(false);
     }

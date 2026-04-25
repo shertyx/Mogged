@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /usr/local/lib/python3.11 /usr/local/lib/python3.11
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY services/face-service/ .
-COPY ai/extract_features.py ./ai/extract_features.py
+COPY ai/extract_features.py ./extract_features.py
 COPY ai/models/ ./ai/models/
 EXPOSE 8000
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

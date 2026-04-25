@@ -3,11 +3,20 @@ from botocore.client import Config
 
 
 class StorageClient:
-    def __init__(self, endpoint: str, access_key: str, secret_key: str, bucket: str):
+    def __init__(self, endpoint: str, access_key: str, secret_key: str, bucket: str, public_endpoint: str = ""):
         self._bucket = bucket
         self._s3 = boto3.client(
             "s3",
             endpoint_url=f"http://{endpoint}",
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+            config=Config(signature_version="s3v4"),
+        )
+        # Separate client for presigning — uses the browser-accessible host
+        public = public_endpoint or endpoint
+        self._s3_public = boto3.client(
+            "s3",
+            endpoint_url=f"http://{public}",
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_key,
             config=Config(signature_version="s3v4"),
@@ -26,7 +35,7 @@ class StorageClient:
         return key
 
     def get_signed_url(self, key: str, expiry: int = 3600) -> str:
-        return self._s3.generate_presigned_url(
+        return self._s3_public.generate_presigned_url(
             "get_object",
             Params={"Bucket": self._bucket, "Key": key},
             ExpiresIn=expiry,

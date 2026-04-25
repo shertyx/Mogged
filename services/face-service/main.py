@@ -2,7 +2,12 @@ import hashlib
 import os
 import httpx
 import joblib
+from typing import List
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
+from pydantic import BaseModel
+
+class SignedUrlsRequest(BaseModel):
+    s3_keys: List[str]
 from dotenv import load_dotenv
 
 from pipeline import AnalysisPipeline
@@ -19,6 +24,7 @@ _storage = StorageClient(
     access_key=os.environ["MINIO_ROOT_USER"],
     secret_key=os.environ["MINIO_ROOT_PASSWORD"],
     bucket=os.environ["MINIO_BUCKET"],
+    public_endpoint=os.environ.get("MINIO_PUBLIC_ENDPOINT", ""),
 )
 
 _model_path = os.environ.get("MODEL_PATH", "/app/models/model_v1.joblib")
@@ -109,3 +115,11 @@ async def analyze_stored_photo(
             raise HTTPException(status_code=502, detail=f"UpdatePhotoScore failed: {score_resp.text}")
 
     return {**result, "photo_id": photo_id}
+
+
+@app.post("/face/photos/signed-urls")
+@app.post("/photos/signed-urls")
+def get_signed_urls(body: SignedUrlsRequest):
+    """Return presigned URLs for a list of s3_keys."""
+    urls = {key: _storage.get_signed_url(key) for key in body.s3_keys}
+    return {"urls": urls}

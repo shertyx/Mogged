@@ -34,6 +34,10 @@ export function PhotoCard({ photo, onDelete, onAnalyze, analyzing, selected, onS
         ✕
       </button>
 
+      {photo.signed_url && (
+        <img src={photo.signed_url} alt="photo" className={styles.thumb} />
+      )}
+
       {hasScore && (
         <div className={styles.scoreBlock}>
           <span className={styles.scoreValue}>{Math.round(photo.chad_score!)}%</span>

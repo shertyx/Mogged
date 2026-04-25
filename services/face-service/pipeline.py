@@ -34,8 +34,7 @@ class AnalysisPipeline:
         if img is None:
             raise ValueError("Cannot decode image")
 
-        img = cv2.resize(img, (224, 224))
-
+        # Extract features on full-size image (dlib needs enough resolution to detect face)
         features = extract_features(img)
         feature_vector = np.array([list(features.values())])
         chad_score = float(self._model.predict(feature_vector)[0])

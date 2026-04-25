@@ -7,6 +7,7 @@ export interface Photo {
   features: Record<string, number> | null;
   hash: string;
   uploaded_at: string;
+  signed_url?: string;
 }
 
 interface PhotosState {
