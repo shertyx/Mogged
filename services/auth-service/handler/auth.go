@@ -37,16 +37,15 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing code", http.StatusBadRequest)
 		return
 	}
-	_, accessToken, refreshToken, err := h.svc.ExchangeCode(code)
+	userID, accessToken, refreshToken, err := h.svc.ExchangeCode(code)
 	if err != nil {
 		http.Error(w, "oauth exchange failed", http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"access_token":  accessToken,
-		"refresh_token": refreshToken,
-	})
+	redirectURL := "http://localhost:3000/login?access_token=" + accessToken +
+		"&refresh_token=" + refreshToken +
+		"&user_id=" + userID
+	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
 
 func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {

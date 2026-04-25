@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { exchangeCallback, getOAuthURL } from '@/api/auth';
+import { getOAuthURL } from '@/api/auth';
 import { useAuthStore } from '@/store/auth';
 import styles from './Login.module.css';
 
@@ -11,15 +11,12 @@ export default function Login() {
   useEffect(() => {
     if (isAuthenticated) { navigate('/'); return; }
     const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const state = params.get('state');
-    if (code && state) {
-      exchangeCallback(code, state)
-        .then((data) => {
-          setTokens(data.access_token, data.refresh_token, data.user_id);
-          navigate('/');
-        })
-        .catch(console.error);
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    const userID = params.get('user_id');
+    if (accessToken && refreshToken && userID) {
+      setTokens(accessToken, refreshToken, userID);
+      navigate('/');
     }
   }, []);
 
