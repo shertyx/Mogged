@@ -58,3 +58,20 @@
 
 .uploadBtn:hover { background: #eee; }
 .uploadBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.analyzeAllBtn {
+  margin: 0 32px 16px;
+  display: block;
+  width: calc(100% - 64px);
+  background: #111;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 12px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.analyzeAllBtn:hover { background: #1a1a1a; border-color: #555; }
+.analyzeAllBtn:disabled { opacity: 0.4; cursor: not-allowed; }

@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 import { usePhotosStore } from '@/store/photos';
 import { listPhotos, deletePhoto } from '@/api/user';
-import { uploadPhoto } from '@/api/face';
+import { uploadPhoto, analyzeStoredPhoto } from '@/api/face';
 
 export function usePhotos() {
-  const { photos, loading, setPhotos, setLoading, removePhoto } = usePhotosStore();
+  const { photos, loading, analyzingIds, setPhotos, setLoading, removePhoto, updatePhoto, setAnalyzing } = usePhotosStore();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -26,10 +26,28 @@ export function usePhotos() {
     }
   }, [load]);
 
+  const analyze = useCallback(async (photoId: string, s3Key: string) => {
+    setAnalyzing(photoId, true);
+    try {
+      const result = await analyzeStoredPhoto(photoId, s3Key);
+      updatePhoto(photoId, {
+        chad_score: result.chad_score,
+        features: result.features,
+      });
+    } finally {
+      setAnalyzing(photoId, false);
+    }
+  }, []);
+
+  const analyzeAll = useCallback(async () => {
+    const unanalyzed = photos.filter((p) => p.chad_score === null);
+    await Promise.all(unanalyzed.map((p) => analyze(p.id, p.s3_key)));
+  }, [photos, analyze]);
+
   const remove = useCallback(async (photoID: string) => {
     await deletePhoto(photoID);
     removePhoto(photoID);
   }, []);
 
-  return { photos, loading, load, upload, remove };
+  return { photos, loading, analyzingIds, load, upload, analyze, analyzeAll, remove };
 }

@@ -7,7 +7,7 @@ import { canUpload, upsertProfile, getProfile } from '@/api/user';
 import styles from './Photos.module.css';
 
 export default function Photos() {
-  const { photos, loading, load, upload, remove } = usePhotos();
+  const { photos, loading, analyzingIds, load, upload, analyze, analyzeAll, remove } = usePhotos();
   const [showConsent, setShowConsent] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -40,6 +40,8 @@ export default function Photos() {
     if (pendingFile) { await upload(pendingFile); setPendingFile(null); }
   };
 
+  const unanalyzedCount = photos.filter((p) => p.chad_score === null).length;
+
   return (
     <div className={styles.page}>
       <nav className={styles.nav}>
@@ -53,9 +55,26 @@ export default function Photos() {
         <h1>My Photos</h1>
         <span className={styles.count}>{photos.length}/10</span>
       </div>
+      {unanalyzedCount > 0 && (
+        <button
+          className={styles.analyzeAllBtn}
+          onClick={analyzeAll}
+          disabled={analyzingIds.size > 0}
+        >
+          {analyzingIds.size > 0
+            ? `Analyzing ${analyzingIds.size}/${unanalyzedCount}…`
+            : `Analyze All (${unanalyzedCount})`}
+        </button>
+      )}
       <div className={styles.grid}>
         {photos.map((p) => (
-          <PhotoCard key={p.id} photo={p} onDelete={remove} />
+          <PhotoCard
+            key={p.id}
+            photo={p}
+            onDelete={remove}
+            onAnalyze={analyze}
+            analyzing={analyzingIds.has(p.id)}
+          />
         ))}
       </div>
       <button className={styles.uploadBtn} onClick={handleUploadClick} disabled={loading}>
