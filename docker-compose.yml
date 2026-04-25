@@ -103,6 +103,7 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_BUCKET: ${MINIO_BUCKET}
       MODEL_PATH: ${MODEL_PATH}
+      USER_SERVICE_URL: http://user-service:8082
     depends_on:
       postgres:
         condition: service_healthy
