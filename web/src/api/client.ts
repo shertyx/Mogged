@@ -45,6 +45,7 @@ export async function apiRequest<T>(
     const text = await res.text();
     throw new Error(text || `HTTP ${res.status}`);
   }
-  if (res.status === 204) return undefined as T;
+  const contentType = res.headers.get('content-type');
+  if (res.status === 204 || !contentType?.includes('application/json')) return undefined as T;
   return res.json() as Promise<T>;
 }
