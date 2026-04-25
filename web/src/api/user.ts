@@ -7,6 +7,7 @@ export async function getProfile() {
     username: string;
     avatar_url: string | null;
     consent_ai: boolean;
+    username_set: boolean;
   }>('/user/profile');
 }
 

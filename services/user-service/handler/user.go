@@ -49,7 +49,7 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		profile = map[string]interface{}{
-			"id": userID, "username": "", "avatar_url": nil, "consent_ai": false,
+			"id": userID, "username": "", "avatar_url": nil, "consent_ai": false, "username_set": false,
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")
