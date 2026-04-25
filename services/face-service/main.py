@@ -30,10 +30,12 @@ _user_service_url = os.environ.get("USER_SERVICE_URL", "http://user-service:8082
 
 
 @app.get("/health")
+@app.get("/face/health")
 def health():
     return {"status": "ok", "service": "face-service"}
 
 
+@app.post("/face/photos/analyze")
 @app.post("/photos/analyze")
 async def analyze_photo(
     request: Request,
