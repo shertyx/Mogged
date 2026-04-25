@@ -7,14 +7,14 @@ import (
 )
 
 type Photo struct {
-	ID         string
-	UserID     string
-	S3Key      string
-	ChadScore  *float64
-	Features   []byte
-	Hash       string
-	Used       bool
-	UploadedAt string
+	ID         string   `json:"id"`
+	UserID     string   `json:"user_id"`
+	S3Key      string   `json:"s3_key"`
+	ChadScore  *float64 `json:"chad_score"`
+	Features   []byte   `json:"features"`
+	Hash       string   `json:"hash"`
+	Used       bool     `json:"used"`
+	UploadedAt string   `json:"uploaded_at"`
 }
 
 type UserRepo struct {
