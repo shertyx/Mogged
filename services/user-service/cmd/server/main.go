@@ -35,6 +35,7 @@ func main() {
 	mux.HandleFunc("/health", h.Health)
 	mux.HandleFunc("/user/profile", h.GetProfile)
 	mux.HandleFunc("/user/profile/upsert", h.UpsertProfile)
+	mux.HandleFunc("/user/profile/username", h.SetUsername)
 	mux.HandleFunc("/user/photos", h.ListPhotos)
 	mux.HandleFunc("/user/photos/delete", h.DeletePhoto)
 	mux.HandleFunc("/user/photos/can-upload", h.CanUpload)

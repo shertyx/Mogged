@@ -16,6 +16,7 @@ type UserServiceIface interface {
 	ListPhotos(userID string) ([]repository.Photo, error)
 	DeletePhoto(photoID, userID string) (string, error)
 	UpdatePhotoScore(photoID string, score float64, features []byte) error
+	SetUsername(userID, username string) error
 }
 
 type UserHandler struct {
@@ -71,6 +72,30 @@ func (h *UserHandler) UpsertProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.svc.UpsertProfile(userID, body.Username, body.ConsentAI); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *UserHandler) SetUsername(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPatch {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	userID := r.Header.Get("X-User-ID")
+	if userID == "" {
+		http.Error(w, "missing user id", http.StatusBadRequest)
+		return
+	}
+	var body struct {
+		Username string `json:"username"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	if err := h.svc.SetUsername(userID, body.Username); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -145,15 +170,20 @@ func (h *UserHandler) RegisterUpload(w http.ResponseWriter, r *http.Request) {
 
 func (h *UserHandler) UpdatePhotoScore(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		PhotoID  string  `json:"photo_id"`
-		Score    float64 `json:"score"`
-		Features []byte  `json:"features"`
+		PhotoID  string              `json:"photo_id"`
+		Score    float64             `json:"score"`
+		Features map[string]float64  `json:"features"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
-	if err := h.svc.UpdatePhotoScore(body.PhotoID, body.Score, body.Features); err != nil {
+	featBytes, err := json.Marshal(body.Features)
+	if err != nil {
+		http.Error(w, "bad features", http.StatusBadRequest)
+		return
+	}
+	if err := h.svc.UpdatePhotoScore(body.PhotoID, body.Score, featBytes); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
