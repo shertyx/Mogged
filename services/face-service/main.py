@@ -1,7 +1,8 @@
 import hashlib
 import os
+import httpx
 import joblib
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 from dotenv import load_dotenv
 
 from pipeline import AnalysisPipeline
@@ -25,6 +26,8 @@ _model = joblib.load(_model_path) if os.path.exists(_model_path) else None
 
 _pipeline = AnalysisPipeline(db=_db, storage=_storage, model=_model)
 
+_user_service_url = os.environ.get("USER_SERVICE_URL", "http://user-service:8082")
+
 
 @app.get("/health")
 def health():
@@ -33,11 +36,15 @@ def health():
 
 @app.post("/photos/analyze")
 async def analyze_photo(
-    photo_id: str = Form(...),
+    request: Request,
     file: UploadFile = File(...),
 ):
     if _model is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
+
+    user_id = request.headers.get("X-User-ID", "")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="missing user id")
 
     contents = await file.read()
     if len(contents) > 5 * 1024 * 1024:
@@ -46,9 +53,34 @@ async def analyze_photo(
     hash_md5 = hashlib.md5(contents).hexdigest()
     ext = (file.filename or "jpg").rsplit(".", 1)[-1].lower()
 
+    # Register photo in user-service to get photo_id
+    async with httpx.AsyncClient() as client:
+        reg_resp = await client.post(
+            f"{_user_service_url}/user/photos/register",
+            json={"s3_key": f"photos/{hash_md5}.{ext}", "hash": hash_md5},
+            headers={"X-User-ID": user_id},
+        )
+        if reg_resp.status_code not in (200, 201):
+            raise HTTPException(status_code=502, detail=f"RegisterUpload failed: {reg_resp.text}")
+        photo_id = reg_resp.json()["photo_id"]
+
+    # Analyse photo
     try:
         result = _pipeline.analyse_photo(contents, hash_md5, ext, photo_id)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
-    return result
+    # Store score in user-service (features as JSON string → []byte on Go side)
+    async with httpx.AsyncClient() as client:
+        score_resp = await client.patch(
+            f"{_user_service_url}/user/photos/score",
+            json={
+                "photo_id": photo_id,
+                "score": result["chad_score"],
+                "features": result["features"],
+            },
+        )
+        if score_resp.status_code not in (200, 201, 204):
+            raise HTTPException(status_code=502, detail=f"UpdatePhotoScore failed: {score_resp.text}")
+
+    return {**result, "photo_id": photo_id}
