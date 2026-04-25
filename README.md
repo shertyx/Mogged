@@ -146,6 +146,13 @@ psql postgres://mogged:mogged_secret@localhost:5432/mogged
 \dt auth.*
 ```
 
+### Dev / Tests
+
+```bash
+# Reset le compteur d'uploads (limite de 5 par heure)
+docker compose exec postgres psql -U mogged -d mogged -c "DELETE FROM users.upload_rate;"
+```
+
 ### MinIO
 
 Console web : [http://localhost:9001](http://localhost:9001)
