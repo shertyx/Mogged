@@ -12,6 +12,13 @@ class StorageClient:
             aws_secret_access_key=secret_key,
             config=Config(signature_version="s3v4"),
         )
+        self._ensure_bucket()
+
+    def _ensure_bucket(self) -> None:
+        try:
+            self._s3.head_bucket(Bucket=self._bucket)
+        except Exception:
+            self._s3.create_bucket(Bucket=self._bucket)
 
     def upload_photo(self, data: bytes, hash_md5: str, ext: str) -> str:
         key = f"photos/{hash_md5}.{ext}"
