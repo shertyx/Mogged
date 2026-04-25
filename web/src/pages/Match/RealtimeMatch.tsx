@@ -32,7 +32,7 @@ export default function RealtimeMatch() {
     ws.current = socket;
     socket.onmessage = (e) => {
       const msg = JSON.parse(e.data) as { type: string; my_score?: number; opp_score?: number; round?: number; winner_is_me?: boolean };
-      if (msg.type === 'matched') setPhase('matched');
+      if (msg.type === 'matched') { setPhase('matched'); socket.send(JSON.stringify({ photo_ids: selected })); }
       else if (msg.type === 'timeout') { setPhase('selecting'); alert('No opponent found'); }
       else if (msg.type === 'round') setRounds((r) => [...r, { round: msg.round!, myScore: msg.my_score!, oppScore: msg.opp_score!, won: (msg.my_score ?? 0) >= (msg.opp_score ?? 0) }]);
       else if (msg.type === 'match_end') { setWon(msg.winner_is_me ?? false); setPhase('result'); socket.close(); }
