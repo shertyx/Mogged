@@ -7,7 +7,7 @@ export async function uploadPhoto(file: File): Promise<{
   const token = localStorage.getItem('access_token');
   const form = new FormData();
   form.append('file', file);
-  const res = await fetch('/face/upload', {
+  const res = await fetch('/face/photos/analyze', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
     body: form,
