@@ -30,3 +30,10 @@ export async function deletePhoto(photoID: string) {
     method: 'DELETE',
   });
 }
+
+export async function setUsername(username: string): Promise<void> {
+  return apiRequest<void>('/user/profile/username', {
+    method: 'PATCH',
+    body: JSON.stringify({ username }),
+  });
+}
