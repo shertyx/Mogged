@@ -22,9 +22,10 @@ CREATE SCHEMA IF NOT EXISTS users;
 
 CREATE TABLE IF NOT EXISTS users.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    username VARCHAR(100) NOT NULL,
+    username VARCHAR(100) NOT NULL DEFAULT '',
     avatar_url TEXT,
     consent_ai BOOLEAN DEFAULT FALSE,
+    username_set BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
