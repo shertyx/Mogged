@@ -42,8 +42,14 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if profile == nil {
-		http.Error(w, "not found", http.StatusNotFound)
-		return
+		// Auto-create empty profile on first access
+		if err := h.svc.UpsertProfile(userID, "", false); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		profile = map[string]interface{}{
+			"id": userID, "username": "", "avatar_url": nil, "consent_ai": false,
+		}
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(profile)
