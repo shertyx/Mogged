@@ -1,0 +1,301 @@
+.page { min-height: 100vh; background: #000; padding-bottom: 80px; }
+
+/* ── Header ── */
+.pageHeader {
+  padding: 32px 20px 16px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.pageTitle {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  letter-spacing: 3px;
+  color: #fff;
+  line-height: 1;
+}
+
+.pageTitleAccent { color: var(--orange); }
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 20px 0;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.tab {
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 10px 10px 0 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s;
+}
+
+.tab:hover { color: #fff; }
+.tab.active { color: var(--orange); border-bottom-color: var(--orange); }
+
+.notif {
+  background: var(--red);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 999px;
+  animation: score-pop 0.3s ease;
+}
+
+.count {
+  background: #222;
+  color: #888;
+  font-size: 0.6rem;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+/* ── Content ── */
+.content { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+
+/* ── Add row ── */
+.addRow { display: flex; gap: 8px; }
+
+.input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #fff;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.input:focus { border-color: var(--orange); }
+.input::placeholder { color: var(--text3); }
+
+.addBtn {
+  background: var(--orange);
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.addBtn:hover { background: #fb923c; }
+.addBtn:active { transform: scale(0.96); }
+
+.addStatus { font-size: 0.8rem; color: var(--text3); padding: 4px 0; }
+
+/* ── Friend rows ── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 0;
+  color: var(--text3);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.friendRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  animation: fadeUp 0.3s ease both;
+  gap: 10px;
+}
+
+.friendName { color: #fff; font-weight: 700; font-size: 0.95rem; flex: 1; }
+
+.actions { display: flex; gap: 6px; }
+
+.challengeBtn {
+  background: var(--orange);
+  color: #000;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 800;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.challengeBtn:hover { background: #fb923c; }
+.challengeBtn:active { transform: scale(0.96); }
+
+.removeBtn {
+  background: none;
+  color: var(--text3);
+  border: 1px solid #222;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.removeBtn:hover { color: var(--red); border-color: var(--red); }
+
+.acceptBtn {
+  background: #071a0e;
+  color: var(--green);
+  border: 1px solid #0d3320;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 800;
+  font-size: 0.8rem;
+  transition: background 0.15s;
+}
+
+.acceptBtn:hover { background: #0d2b17; }
+
+/* ── Challenge / Accept views ── */
+.challengeHeader {
+  padding: 28px 20px 16px;
+  border-bottom: 1px solid #1a1a1a;
+  animation: fadeUp 0.3s ease;
+}
+
+.challengeTitle {
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  color: #fff;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.target { color: var(--orange); }
+
+.sub { font-size: 0.75rem; color: var(--text3); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.1em; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 20px;
+}
+
+.sendBtn {
+  margin: 0 20px 20px;
+  width: calc(100% - 40px);
+  background: var(--orange);
+  color: #000;
+  border: none;
+  border-radius: 14px;
+  padding: 16px;
+  font-weight: 900;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  animation: pulse-glow 2s infinite;
+  transition: transform 0.1s;
+}
+
+.sendBtn:hover { transform: scale(1.02); }
+.sendBtn:active { transform: scale(0.97); }
+.sendBtn:disabled { opacity: 0.3; cursor: not-allowed; animation: none; }
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 16px 20px 0;
+}
+
+.backBtn:hover { color: #fff; }
+
+/* ── Result ── */
+.resultBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 60px 20px;
+  animation: fadeUp 0.4s ease;
+}
+
+.resultText {
+  font-family: var(--font-display);
+  font-size: 5rem;
+  letter-spacing: 4px;
+  text-align: center;
+}
+
+.resultWin  { color: var(--green); animation: score-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.resultLoss { color: var(--red); animation: shake 0.5s ease both; }
+
+.resultBtn {
+  background: var(--surface);
+  color: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 28px;
+  font-weight: 700;
+}
+
+/* ── Camera prompt ── */
+.cameraPrompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  text-align: center;
+  animation: fadeUp 0.3s ease;
+}
+
+.cameraIcon { font-size: 3rem; animation: float 2.5s ease-in-out infinite; }
+
+.cameraPromptText {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  letter-spacing: 2px;
+  color: #fff;
+  margin: 0;
+}
+
+.cameraPromptSub { font-size: 0.75rem; color: var(--text3); margin: 0; }
+
+/* ── Result scores ── */
+.resultScores {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 28px;
+}
+
+.resultScoreCol { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.resultPlayerName { font-size: 0.7rem; color: var(--text3); font-weight: 700; text-transform: uppercase; }
+.resultScoreVal { font-family: var(--font-display); font-size: 2.5rem; color: #fff; }
+.resultVs { font-family: var(--font-display); font-size: 1.5rem; color: #333; letter-spacing: 2px; }

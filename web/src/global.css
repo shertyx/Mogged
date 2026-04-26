@@ -1,11 +1,93 @@
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #000;
-  color: #fff;
-  -webkit-font-smoothing: antialiased;
+:root {
+  --orange: #f97316;
+  --orange-dim: #c2591060;
+  --orange-glow: 0 0 24px #f9731680, 0 0 64px #f9731640;
+  --surface: #0d0d0d;
+  --surface2: #161616;
+  --border: #1f1f1f;
+  --text: #ffffff;
+  --text2: #888;
+  --text3: #444;
+  --green: #22c55e;
+  --red: #ef4444;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'Inter', sans-serif;
 }
 
-button { font-family: inherit; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { height: 100%; }
+
+body {
+  font-family: var(--font-body);
+  background: #000;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+button { font-family: inherit; cursor: pointer; }
 input { font-family: inherit; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #222; border-radius: 2px; }
+
+/* ── Keyframes ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px #f9731660, 0 0 40px #f9731630; }
+  50%       { box-shadow: 0 0 32px #f97316aa, 0 0 80px #f9731660; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-4px) rotate(-2deg); }
+  40%       { transform: translateX(4px) rotate(2deg); }
+  60%       { transform: translateX(-3px) rotate(-1deg); }
+  80%       { transform: translateX(3px) rotate(1deg); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes score-pop {
+  0%   { transform: scale(0.5); opacity: 0; }
+  70%  { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes bar-fill {
+  from { width: 0%; }
+}
+
+/* ── Shared utility classes ── */
+.animate-fadeUp  { animation: fadeUp 0.4s ease forwards; }
+.animate-fadeIn  { animation: fadeIn 0.3s ease forwards; }
+.animate-pop     { animation: score-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.animate-float   { animation: float 3s ease-in-out infinite; }

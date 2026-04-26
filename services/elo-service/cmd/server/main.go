@@ -48,6 +48,13 @@ func main() {
 	mux.HandleFunc("/elo/match", h.GetMatch)
 	mux.HandleFunc("/elo/match/ready", h.SetMatchReady)
 	mux.HandleFunc("/elo/match/resolve", h.ResolveMatch)
+	mux.HandleFunc("/elo/leaderboard", h.GetLeaderboard)
+	mux.HandleFunc("/elo/history", h.GetMatchHistory)
+	mux.HandleFunc("/elo/duel/send", h.SendDuelRequest)
+	mux.HandleFunc("/elo/duel/pending", h.ListPendingDuels)
+	mux.HandleFunc("/elo/duel/accept", h.AcceptDuelRequest)
+	mux.HandleFunc("/elo/duel/decline", h.DeclineDuelRequest)
+	mux.HandleFunc("/elo/feed", h.GetFeed)
 
 	log.Printf("elo-service listening on :%s", port)
 	log.Fatal(http.ListenAndServe(":"+port, mux))

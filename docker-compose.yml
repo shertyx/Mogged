@@ -73,6 +73,7 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_BUCKET: ${MINIO_BUCKET}
+      ADMIN_EMAILS: ${ADMIN_EMAILS}
     depends_on:
       postgres:
         condition: service_healthy

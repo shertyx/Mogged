@@ -5,34 +5,140 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 0;
+  overflow: hidden;
+  position: relative;
+  padding: 0 32px 60px;
+}
+
+/* Background grid */
+.container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(#1a1a1a 1px, transparent 1px),
+    linear-gradient(90deg, #1a1a1a 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);
+  opacity: 0.4;
+}
+
+.memes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.meme {
+  position: absolute;
+  font-size: 4rem;
+  opacity: 0.06;
+  animation: float 4s ease-in-out infinite;
+  user-select: none;
+}
+
+.hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 48px;
+  animation: fadeUp 0.6s ease forwards;
+}
+
+.jaw {
+  font-size: 3rem;
+  animation: float 2.5s ease-in-out infinite;
 }
 
 .title {
-  font-size: 4rem;
-  font-weight: 900;
+  font-family: var(--font-display);
+  font-size: 7rem;
   color: #fff;
-  letter-spacing: -3px;
-  margin: 0;
+  letter-spacing: 4px;
+  line-height: 0.9;
+  text-align: center;
 }
 
-.subtitle {
-  font-size: 1rem;
-  color: #888;
-  margin: 0;
+.titleAccent {
+  color: var(--orange);
+  display: block;
+}
+
+.tagline {
+  font-size: 0.9rem;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-top: 12px;
+}
+
+.stats {
+  display: flex;
+  gap: 32px;
+  margin: 0 0 48px;
+  animation: fadeUp 0.7s 0.1s ease both;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.statValue {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--orange);
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 0.6rem;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .button {
-  margin-top: 32px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   background: #fff;
   color: #000;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 1rem;
-  padding: 14px 32px;
-  border-radius: 12px;
+  padding: 16px 32px;
+  border-radius: 14px;
   text-decoration: none;
+  animation: fadeUp 0.7s 0.2s ease both;
+  transition: transform 0.15s, background 0.15s;
+  letter-spacing: 0.02em;
 }
 
 .button:hover {
-  background: #eee;
+  background: #f0f0f0;
+  transform: translateY(-2px);
+}
+
+.button:active { transform: scale(0.97); }
+
+.googleIcon {
+  width: 20px;
+  height: 20px;
+}
+
+.disclaimer {
+  position: absolute;
+  bottom: 24px;
+  font-size: 0.65rem;
+  color: #333;
+  text-align: center;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }

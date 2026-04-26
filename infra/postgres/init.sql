@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS users.profiles (
     avatar_url TEXT,
     consent_ai BOOLEAN DEFAULT FALSE,
     username_set BOOLEAN DEFAULT FALSE,
+    username_changes INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -49,10 +50,10 @@ CREATE TABLE IF NOT EXISTS users.upload_rate (
 -- Schéma elo
 CREATE SCHEMA IF NOT EXISTS elo;
 
-CREATE TABLE IF NOT EXISTS elo.scores (
+CREATE TABLE IF NOT EXISTS elo.ratings (
     user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    elo INT DEFAULT 1000,
-    tier VARCHAR(50) DEFAULT 'Bronze',
+    score INT DEFAULT 1000,
+    tier VARCHAR(50) DEFAULT 'Gold 5',
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -60,13 +61,13 @@ CREATE TABLE IF NOT EXISTS elo.matches (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     player_a UUID REFERENCES auth.users(id),
     player_b UUID REFERENCES auth.users(id),
-    winner UUID REFERENCES auth.users(id),
+    winner_id UUID REFERENCES auth.users(id),
     elo_change_a INT,
     elo_change_b INT,
     mode VARCHAR(10) NOT NULL DEFAULT 'realtime',
-    status VARCHAR(10) NOT NULL DEFAULT 'pending',
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
     expires_at TIMESTAMP,
-    played_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS elo.rounds (
@@ -76,6 +77,16 @@ CREATE TABLE IF NOT EXISTS elo.rounds (
     photo_b UUID REFERENCES users.photos(id),
     winner_photo UUID REFERENCES users.photos(id),
     round_number INT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS elo.match_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    match_id UUID REFERENCES elo.matches(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    opponent_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    won BOOLEAN NOT NULL,
+    elo_change INT NOT NULL DEFAULT 0,
+    played_at TIMESTAMP DEFAULT NOW()
 );
 
 -- Schéma face
@@ -92,4 +103,13 @@ CREATE TABLE IF NOT EXISTS face.scores (
     nose FLOAT,
     forehead FLOAT,
     analyzed_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS users.friendships (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    requester_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    addressee_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    status VARCHAR(10) NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(requester_id, addressee_id)
 );

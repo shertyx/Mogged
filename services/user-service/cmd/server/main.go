@@ -27,9 +27,10 @@ func main() {
 		log.Fatal("db ping:", err)
 	}
 
+	adminEmails := os.Getenv("ADMIN_EMAILS")
 	repo := repository.NewUserRepo(db)
 	svc := service.NewUserService(repo)
-	h := handler.NewUserHandler(svc)
+	h := handler.NewUserHandler(svc, adminEmails)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", h.Health)
@@ -41,6 +42,11 @@ func main() {
 	mux.HandleFunc("/user/photos/can-upload", h.CanUpload)
 	mux.HandleFunc("/user/photos/register", h.RegisterUpload)
 	mux.HandleFunc("/user/photos/score", h.UpdatePhotoScore)
+	mux.HandleFunc("/user/friends", h.ListFriends)
+	mux.HandleFunc("/user/friends/requests", h.ListPendingRequests)
+	mux.HandleFunc("/user/friends/request", h.SendFriendRequest)
+	mux.HandleFunc("/user/friends/accept", h.AcceptFriendRequest)
+	mux.HandleFunc("/user/friends/remove", h.RemoveFriend)
 
 	log.Printf("user-service listening on :%s", port)
 	log.Fatal(http.ListenAndServe(":"+port, mux))

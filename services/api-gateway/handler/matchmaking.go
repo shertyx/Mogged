@@ -255,6 +255,51 @@ func createRealtimeMatch(eloServiceURL, playerA, playerB string) (string, error)
 	return result.MatchID, nil
 }
 
+func (q *MatchQueue) HandleBotMatch(eloServiceURL string, userServiceURL string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID := r.Header.Get("X-User-ID")
+		if userID == "" {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		var body struct {
+			PhotoIDs []string `json:"photo_ids"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil || len(body.PhotoIDs) != 3 {
+			http.Error(w, "need exactly 3 photo_ids", http.StatusBadRequest)
+			return
+		}
+		scores, err := fetchPhotoScores(userServiceURL, body.PhotoIDs)
+		if err != nil {
+			http.Error(w, "failed to fetch scores", http.StatusInternalServerError)
+			return
+		}
+		// Bot has configurable difficulty: random scores between 40-75
+		type roundResult struct {
+			Round      int     `json:"round"`
+			MyScore    float64 `json:"my_score"`
+			BotScore   float64 `json:"bot_score"`
+			WonRound   bool    `json:"won_round"`
+		}
+		aWins := 0
+		var rounds []roundResult
+		for i := 0; i < 3; i++ {
+			// Bot score: uniform random 40-75 (challenging but beatable)
+			botScore := 40.0 + float64((i*7+17)%35)
+			won := scores[i] >= botScore
+			if won {
+				aWins++
+			}
+			rounds = append(rounds, roundResult{Round: i + 1, MyScore: scores[i], BotScore: botScore, WonRound: won})
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"won":    aWins >= 2,
+			"rounds": rounds,
+		})
+	}
+}
+
 func resolveMatch(eloServiceURL string, body map[string]interface{}) error {
 	b, _ := json.Marshal(body)
 	resp, err := http.Post(eloServiceURL+"/elo/match/resolve", "application/json", bytes.NewReader(b))

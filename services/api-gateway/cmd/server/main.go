@@ -35,11 +35,13 @@ func main() {
 	protected.Handle("/elo/", handler.NewReverseProxy(eloURL))
 	protected.Handle("/face/", handler.NewReverseProxy(faceURL))
 	protected.HandleFunc("/matchmaking", mq.HandleMatchmaking(eloURL, userURL))
+	protected.HandleFunc("/matchmaking/bot", mq.HandleBotMatch(eloURL, userURL))
 
 	mux.Handle("/user/", middleware.JWTAuth(jwtSecret, protected))
 	mux.Handle("/elo/", middleware.JWTAuth(jwtSecret, protected))
 	mux.Handle("/face/", middleware.JWTAuth(jwtSecret, protected))
 	mux.Handle("/matchmaking", middleware.JWTAuth(jwtSecret, protected))
+	mux.Handle("/matchmaking/bot", middleware.JWTAuth(jwtSecret, protected))
 
 	log.Printf("api-gateway listening on :%s", port)
 	log.Fatal(http.ListenAndServe(":"+port, mux))

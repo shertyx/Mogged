@@ -1,0 +1,167 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  animation: fadeUp 0.4s ease both;
+}
+
+/* ── Header ── */
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 8px;
+}
+
+.matchLabel {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--orange);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.time {
+  font-size: 0.65rem;
+  color: var(--text3);
+}
+
+/* ── Dual layout ── */
+.duoLayout {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.player {
+  flex: 1;
+  position: relative;
+}
+
+.winner { opacity: 1; }
+.loser { opacity: 0.6; filter: grayscale(30%); }
+
+.photoWrap {
+  position: relative;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  background: #0a0a0a;
+}
+
+.photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.noPhoto {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: #222;
+}
+
+.photoOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.9));
+  padding: 24px 10px 10px;
+}
+
+.playerName {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scoreRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.scoreNum {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.scoreBadge {
+  font-size: 0.5rem;
+  font-weight: 900;
+  color: #000;
+  padding: 2px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  align-self: flex-end;
+  margin-bottom: 2px;
+}
+
+.winBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 1.2rem;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+}
+
+.lossBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 1rem;
+  opacity: 0.6;
+}
+
+/* ── VS ── */
+.vs {
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  flex-shrink: 0;
+}
+
+.vs span {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  color: #333;
+  letter-spacing: 1px;
+  writing-mode: vertical-rl;
+}
+
+/* ── Result strip ── */
+.resultStrip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #0a0a0a;
+  border-top: 1px solid #1a1a1a;
+}
+
+.resultWinner {
+  font-size: 0.75rem;
+  color: #ccc;
+  font-weight: 600;
+}
+
+.resultDiff {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--orange);
+  letter-spacing: 1px;
+}

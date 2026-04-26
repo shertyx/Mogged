@@ -41,19 +41,24 @@ def _symmetry_score(pts: np.ndarray) -> float:
         deviations.append(abs(dist_l - dist_r) / face_width)
 
     mean_dev = float(np.mean(deviations))
-    return normalize_score(mean_dev, 0.5, 0.0)
+    return normalize_score(mean_dev, 0.35, 0.0)
 
 
 def _golden_ratio_score(pts: np.ndarray) -> float:
-    face_width = float(np.linalg.norm(pts[0] - pts[16]))
-    face_height = float(np.linalg.norm(pts[8] - pts[27]))
-    if face_width == 0:
-        return 50.0
-    # height/width should be close to golden ratio 1.618
-    ratio = face_height / face_width
-    golden = 1.618
-    deviation = abs(ratio - golden)
-    return normalize_score(deviation, 0.5, 0.0)
+    # Rule of thirds: face splits into 3 equal vertical zones
+    # brow_top → eye center → nose base → chin should be roughly equal
+    brow_top_y = float(np.min(pts[17:27, 1]))
+    eye_center_y = float(pts[36:48].mean(axis=0)[1])
+    nose_base_y = float(pts[33][1])
+    chin_y = float(pts[8][1])
+
+    upper = abs(eye_center_y - brow_top_y)
+    middle = abs(nose_base_y - eye_center_y)
+    lower = abs(chin_y - nose_base_y)
+    avg = (upper + middle + lower) / 3 or 1
+
+    variance = (abs(upper - avg) + abs(middle - avg) + abs(lower - avg)) / (3 * avg)
+    return normalize_score(variance, 0.35, 0.0)
 
 
 def _jawline_score(pts: np.ndarray) -> float:
@@ -83,14 +88,18 @@ def _nose_score(pts: np.ndarray) -> float:
 
 
 def _forehead_score(pts: np.ndarray) -> float:
-    brow_y = min(pts[19][1], pts[24][1])
-    chin_y = pts[8][1]
-    nose_y = pts[27][1]
-    face_height = float(abs(chin_y - brow_y)) or 1
-    upper_third = float(abs(nose_y - brow_y))
-    ratio = upper_third / face_height
-    deviation = abs(ratio - 0.33)
-    return normalize_score(deviation, 0.2, 0.0)
+    # Forehead height = brow to estimated hairline (extrapolated from face proportions)
+    brow_y = float(min(pts[19][1], pts[24][1]))
+    chin_y = float(pts[8][1])
+    nose_base_y = float(pts[33][1])
+    # Lower face height (chin to nose base) as reference
+    lower_face = abs(chin_y - nose_base_y) or 1
+    # Brow to nose base = mid face
+    mid_face = abs(nose_base_y - brow_y)
+    # Ideal: brow-to-nose ≈ 0.9-1.1× lower face (balanced thirds)
+    ratio = mid_face / lower_face
+    deviation = abs(ratio - 1.0)
+    return normalize_score(deviation, 0.4, 0.0)
 
 
 def extract_features(img: np.ndarray) -> dict[str, float]:

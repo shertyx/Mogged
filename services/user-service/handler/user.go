@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/mogged/user-service/repository"
 	"github.com/mogged/user-service/service"
@@ -17,14 +18,28 @@ type UserServiceIface interface {
 	DeletePhoto(photoID, userID string) (string, error)
 	UpdatePhotoScore(photoID string, score float64, features []byte) error
 	SetUsername(userID, username string) error
+	SendFriendRequest(requesterID, addresseeID string) error
+	AcceptFriendRequest(userID, requesterID string) error
+	RemoveFriend(userID, otherID string) error
+	ListFriends(userID string) ([]repository.Friend, error)
+	ListPendingRequests(userID string) ([]repository.Friend, error)
+	FindUserByUsername(username string) (string, error)
 }
 
 type UserHandler struct {
-	svc UserServiceIface
+	svc         UserServiceIface
+	adminEmails map[string]bool
 }
 
-func NewUserHandler(svc UserServiceIface) *UserHandler {
-	return &UserHandler{svc: svc}
+func NewUserHandler(svc UserServiceIface, adminEmails string) *UserHandler {
+	admins := map[string]bool{}
+	for _, e := range strings.Split(adminEmails, ",") {
+		e = strings.TrimSpace(e)
+		if e != "" {
+			admins[e] = true
+		}
+	}
+	return &UserHandler{svc: svc, adminEmails: admins}
 }
 
 func (h *UserHandler) Health(w http.ResponseWriter, r *http.Request) {
@@ -49,9 +64,11 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		profile = map[string]interface{}{
-			"id": userID, "username": "", "avatar_url": nil, "consent_ai": false, "username_set": false,
+			"id": userID, "username": "", "avatar_url": nil, "consent_ai": false, "username_set": false, "email": "",
 		}
 	}
+	email, _ := profile["email"].(string)
+	profile["is_admin"] = h.adminEmails[email]
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(profile)
 }
@@ -188,6 +205,93 @@ func (h *UserHandler) UpdatePhotoScore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *UserHandler) SendFriendRequest(w http.ResponseWriter, r *http.Request) {
+	userID := r.Header.Get("X-User-ID")
+	var body struct {
+		Username string `json:"username"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Username == "" {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	targetID, err := h.svc.FindUserByUsername(body.Username)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if targetID == "" {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+	if targetID == userID {
+		http.Error(w, "cannot add yourself", http.StatusBadRequest)
+		return
+	}
+	if err := h.svc.SendFriendRequest(userID, targetID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *UserHandler) AcceptFriendRequest(w http.ResponseWriter, r *http.Request) {
+	userID := r.Header.Get("X-User-ID")
+	var body struct {
+		RequesterID string `json:"requester_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	if err := h.svc.AcceptFriendRequest(userID, body.RequesterID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *UserHandler) RemoveFriend(w http.ResponseWriter, r *http.Request) {
+	userID := r.Header.Get("X-User-ID")
+	otherID := r.URL.Query().Get("user_id")
+	if otherID == "" {
+		http.Error(w, "missing user_id", http.StatusBadRequest)
+		return
+	}
+	if err := h.svc.RemoveFriend(userID, otherID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *UserHandler) ListFriends(w http.ResponseWriter, r *http.Request) {
+	userID := r.Header.Get("X-User-ID")
+	friends, err := h.svc.ListFriends(userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if friends == nil {
+		friends = []repository.Friend{}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(friends)
+}
+
+func (h *UserHandler) ListPendingRequests(w http.ResponseWriter, r *http.Request) {
+	userID := r.Header.Get("X-User-ID")
+	reqs, err := h.svc.ListPendingRequests(userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if reqs == nil {
+		reqs = []repository.Friend{}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(reqs)
 }
 
 // compile-time check

@@ -1,8 +1,32 @@
 .badge {
-  border: 2px solid;
-  border-radius: 8px;
-  padding: 4px 12px;
-  font-weight: 900;
-  font-size: 14px;
-  letter-spacing: 1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #0d0d0d;
+  border: 1px solid;
+  border-radius: 14px;
+  padding: 10px 16px;
 }
+
+.sm { padding: 6px 10px; gap: 6px; border-radius: 10px; }
+.lg { padding: 16px 24px; gap: 14px; border-radius: 18px; }
+
+.icon { font-size: 1.4rem; line-height: 1; }
+.sm .icon { font-size: 1rem; }
+.lg .icon { font-size: 2.2rem; }
+
+.info { display: flex; flex-direction: column; gap: 1px; }
+
+.name {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.sm .name { font-size: 0.75rem; letter-spacing: 1px; }
+.lg .name { font-size: 1.8rem; letter-spacing: 3px; }
+
+.sr { font-size: 0.6rem; color: #555; font-weight: 700; letter-spacing: 0.08em; }
+.sm .sr { font-size: 0.55rem; }
+.lg .sr { font-size: 0.75rem; }

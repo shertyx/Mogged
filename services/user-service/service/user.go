@@ -17,6 +17,12 @@ type UserRepoIface interface {
 	DeletePhoto(photoID, userID string) (string, error)
 	UpdatePhotoScore(photoID string, score float64, features []byte) error
 	SetUsername(userID, username string) error
+	SendFriendRequest(requesterID, addresseeID string) error
+	AcceptFriendRequest(userID, requesterID string) error
+	RemoveFriend(userID, otherID string) error
+	ListFriends(userID string) ([]repository.Friend, error)
+	ListPendingRequests(userID string) ([]repository.Friend, error)
+	FindUserByUsername(username string) (string, error)
 }
 
 type UserService struct {
@@ -28,20 +34,6 @@ func NewUserService(repo UserRepoIface) *UserService {
 }
 
 func (s *UserService) CanUpload(userID string) error {
-	count, err := s.repo.CountPhotos(userID)
-	if err != nil {
-		return err
-	}
-	if count >= 10 {
-		return fmt.Errorf("max 10 photos reached — delete one first")
-	}
-	uploads, err := s.repo.CountUploadsLastHour(userID)
-	if err != nil {
-		return err
-	}
-	if uploads >= 5 {
-		return fmt.Errorf("max 5 uploads per hour reached")
-	}
 	return nil
 }
 
@@ -70,6 +62,30 @@ func (s *UserService) DeletePhoto(photoID, userID string) (string, error) {
 
 func (s *UserService) UpdatePhotoScore(photoID string, score float64, features []byte) error {
 	return s.repo.UpdatePhotoScore(photoID, score, features)
+}
+
+func (s *UserService) SendFriendRequest(requesterID, addresseeID string) error {
+	return s.repo.SendFriendRequest(requesterID, addresseeID)
+}
+
+func (s *UserService) AcceptFriendRequest(userID, requesterID string) error {
+	return s.repo.AcceptFriendRequest(userID, requesterID)
+}
+
+func (s *UserService) RemoveFriend(userID, otherID string) error {
+	return s.repo.RemoveFriend(userID, otherID)
+}
+
+func (s *UserService) ListFriends(userID string) ([]repository.Friend, error) {
+	return s.repo.ListFriends(userID)
+}
+
+func (s *UserService) ListPendingRequests(userID string) ([]repository.Friend, error) {
+	return s.repo.ListPendingRequests(userID)
+}
+
+func (s *UserService) FindUserByUsername(username string) (string, error) {
+	return s.repo.FindUserByUsername(username)
 }
 
 func (s *UserService) SetUsername(userID, username string) error {

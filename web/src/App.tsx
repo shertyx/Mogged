@@ -7,6 +7,10 @@ import Profile from '@/pages/Profile/Profile';
 import Matchmaking from '@/pages/Matchmaking/Matchmaking';
 import RealtimeMatch from '@/pages/Match/RealtimeMatch';
 import Challenge from '@/pages/Match/Challenge';
+import Admin from '@/pages/Admin/Admin';
+import Friends from '@/pages/Friends/Friends';
+import Leaderboard from '@/pages/Leaderboard/Leaderboard';
+import Analyze from '@/pages/Analyze/Analyze';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, hydrate } = useAuthStore();
@@ -35,6 +39,10 @@ export default function App() {
           <Route path="/matchmaking" element={<Matchmaking />} />
           <Route path="/match/realtime" element={<RealtimeMatch />} />
           <Route path="/match/challenge" element={<Challenge />} />
+          <Route path="/friends" element={<Friends />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/analyze" element={<Analyze />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthGuard>

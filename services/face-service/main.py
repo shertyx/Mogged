@@ -74,6 +74,52 @@ async def upload_photo(
     return {"photo_id": photo_id, "s3_key": s3_key, "signed_url": signed_url}
 
 
+@app.post("/face/photos/capture")
+@app.post("/photos/capture")
+async def capture_and_analyze(
+    request: Request,
+    file: UploadFile = File(...),
+):
+    """Upload + ML analyze in one shot — used for live duel captures."""
+    user_id = request.headers.get("X-User-ID", "")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="missing user id")
+    if _model is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
+    contents = await file.read()
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large (max 10MB)")
+
+    hash_md5 = hashlib.md5(contents).hexdigest()
+    ext = (file.filename or "jpg").rsplit(".", 1)[-1].lower()
+    s3_key = _storage.upload_photo(contents, hash_md5, ext)
+
+    async with httpx.AsyncClient() as client:
+        reg_resp = await client.post(
+            f"{_user_service_url}/user/photos/register",
+            json={"s3_key": s3_key, "hash": hash_md5},
+            headers={"X-User-ID": user_id},
+        )
+        if reg_resp.status_code not in (200, 201):
+            raise HTTPException(status_code=502, detail=f"RegisterUpload failed: {reg_resp.text}")
+        photo_id = reg_resp.json()["photo_id"]
+
+    try:
+        result = _pipeline.analyse_photo(contents, hash_md5, ext, photo_id)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    async with httpx.AsyncClient() as client:
+        await client.patch(
+            f"{_user_service_url}/user/photos/score",
+            json={"photo_id": photo_id, "score": result["chad_score"], "features": result["features"]},
+        )
+
+    signed_url = _storage.get_signed_url(s3_key)
+    return {**result, "photo_id": photo_id, "s3_key": s3_key, "signed_url": signed_url}
+
+
 @app.post("/face/photos/analyze-stored")
 @app.post("/photos/analyze-stored")
 async def analyze_stored_photo(

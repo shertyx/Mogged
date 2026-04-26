@@ -1,0 +1,98 @@
+.page { min-height: 100vh; background: #000; padding-bottom: 80px; }
+
+.header {
+  padding: 40px 20px 20px;
+  border-bottom: 1px solid #1a1a1a;
+  animation: fadeUp 0.4s ease;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 4rem;
+  color: #fff;
+  letter-spacing: 4px;
+  line-height: 0.95;
+}
+
+.titleAccent { color: var(--orange); }
+
+.subtitle {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-top: 8px;
+}
+
+.content { padding: 0 20px 20px; }
+
+.loading, .empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 60px 0;
+  color: var(--text3);
+  font-size: 0.9rem;
+}
+
+/* ── Podium ── */
+.podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 0 24px;
+  animation: fadeUp 0.5s ease both;
+}
+
+.podiumSlot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 12px 12px;
+  min-width: 90px;
+  transition: border-color 0.2s;
+}
+
+.podiumFirst {
+  padding: 24px 16px 16px;
+  border-color: var(--orange);
+  box-shadow: 0 0 24px #f9731620;
+}
+
+.podiumMe { border-color: #22c55e; }
+
+.podiumMedal { font-size: 1.8rem; }
+.podiumName { font-size: 0.7rem; font-weight: 700; color: #fff; text-align: center; word-break: break-all; }
+.podiumSR { font-size: 0.6rem; color: var(--text3); font-weight: 700; }
+
+/* ── List ── */
+.list { display: flex; flex-direction: column; gap: 6px; }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  animation: fadeUp 0.4s ease both;
+  transition: border-color 0.15s;
+}
+
+.row:hover { border-color: #2a2a2a; }
+
+.rowMe {
+  border-color: var(--orange);
+  background: #120800;
+}
+
+.rowRank { color: var(--text3); font-size: 0.8rem; font-weight: 700; width: 32px; flex-shrink: 0; }
+.rowName { flex: 1; color: #fff; font-weight: 700; font-size: 0.9rem; }
