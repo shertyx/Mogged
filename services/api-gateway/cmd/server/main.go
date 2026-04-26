@@ -34,12 +34,13 @@ func main() {
 	protected.Handle("/user/", handler.NewReverseProxy(userURL))
 	protected.Handle("/elo/", handler.NewReverseProxy(eloURL))
 	protected.Handle("/face/", handler.NewReverseProxy(faceURL))
-	protected.HandleFunc("/matchmaking", mq.HandleMatchmaking(eloURL, userURL))
+
 
 	mux.Handle("/user/", middleware.JWTAuth(jwtSecret, protected))
 	mux.Handle("/elo/", middleware.JWTAuth(jwtSecret, protected))
 	mux.Handle("/face/", middleware.JWTAuth(jwtSecret, protected))
-	mux.Handle("/matchmaking", middleware.JWTAuth(jwtSecret, protected))
+	// /matchmaking auth is handled inside the WS handler (token sent in first message)
+	mux.HandleFunc("/matchmaking", mq.HandleMatchmaking(eloURL, faceURL, userURL, jwtSecret))
 
 	log.Printf("api-gateway listening on :%s", port)
 	log.Fatal(http.ListenAndServe(":"+port, mux))

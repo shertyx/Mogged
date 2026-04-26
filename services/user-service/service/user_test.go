@@ -25,6 +25,11 @@ func (m *mockRepo) DeletePhoto(photoID, userID string) (string, error)  { return
 func (m *mockRepo) UpdatePhotoScore(photoID string, score float64, features []byte) error {
 	return nil
 }
+func (m *mockRepo) SetUsername(userID, username string) error                        { return nil }
+func (m *mockRepo) GetUserByUsername(username string) (string, error)                { return "", nil }
+func (m *mockRepo) ListUnanalyzedPhotos(userID string) ([]repository.Photo, error)   { return nil, nil }
+func (m *mockRepo) MarkPhotoUsed(photoID string) error                               { return nil }
+func (m *mockRepo) GetPhotoByID(photoID string) (*repository.Photo, error)           { return nil, nil }
 
 func TestCanUpload_UnderLimit(t *testing.T) {
 	svc := service.NewUserService(&mockRepo{photoCount: 5, uploadCount: 2})

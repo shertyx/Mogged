@@ -41,6 +41,10 @@ func main() {
 	mux.HandleFunc("/user/photos/can-upload", h.CanUpload)
 	mux.HandleFunc("/user/photos/register", h.RegisterUpload)
 	mux.HandleFunc("/user/photos/score", h.UpdatePhotoScore)
+	mux.HandleFunc("/user/photos/unanalyzed", h.ListUnanalyzedPhotos)
+	mux.HandleFunc("/user/photos/mark-used", h.MarkPhotoUsed)
+	mux.HandleFunc("/user/photos/by-id", h.GetPhotoByID)
+	mux.HandleFunc("/user/by-username", h.GetUserByUsername)
 
 	log.Printf("user-service listening on :%s", port)
 	log.Fatal(http.ListenAndServe(":"+port, mux))

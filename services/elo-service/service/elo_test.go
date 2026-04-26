@@ -26,14 +26,17 @@ func (m *mockRepo) UpsertElo(userID string, score int, tier string) error {
 	m.elo[userID] = score
 	return nil
 }
-func (m *mockRepo) CreateMatch(a, b, mode string, exp *time.Time) (string, error) {
+func (m *mockRepo) CreateMatch(a, b, mode string, exp *time.Time, photoAID *string) (string, error) {
 	return "match-1", nil
 }
-func (m *mockRepo) GetMatch(id string) (*repository.Match, error)        { return nil, nil }
-func (m *mockRepo) SetMatchReady(id string) error                        { return nil }
-func (m *mockRepo) CompleteMatch(id, winner string) error                { return nil }
-func (m *mockRepo) ExpireStaleMatches() ([]repository.Match, error)      { return nil, nil }
-func (m *mockRepo) InsertRound(matchID, pA, pB, wP string, r int) error  { return nil }
+func (m *mockRepo) GetMatch(id string) (*repository.Match, error)                          { return nil, nil }
+func (m *mockRepo) SetMatchReady(id string) error                                          { return nil }
+func (m *mockRepo) SetMatchPhotos(matchID, photoAID, photoBID string) error                { return nil }
+func (m *mockRepo) CompleteMatch(id, winner string) error                                  { return nil }
+func (m *mockRepo) ExpireStaleMatches() ([]repository.Match, error)                       { return nil, nil }
+func (m *mockRepo) InsertRound(matchID, pA, pB, wP string, r int) error                   { return nil }
+func (m *mockRepo) ListPendingChallenges(userID string) ([]repository.Match, error)        { return nil, nil }
+func (m *mockRepo) GetMatchPhotos(matchID string) (string, string, error)                  { return "", "", nil }
 
 func TestTierFromELO(t *testing.T) {
 	cases := []struct{ score int; want string }{

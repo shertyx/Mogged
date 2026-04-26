@@ -28,9 +28,12 @@ func main() {
 		log.Fatal("db ping:", err)
 	}
 
+	faceURL := os.Getenv("FACE_SERVICE_URL")
+	userURL := os.Getenv("USER_SERVICE_URL")
+
 	repo := repository.NewEloRepo(db)
 	svc := service.NewEloService(repo)
-	h := handler.NewEloHandler(svc)
+	h := handler.NewEloHandlerWithURLs(svc, faceURL, userURL)
 
 	// background goroutine: expire stale async matches every minute
 	go func() {
@@ -45,6 +48,9 @@ func main() {
 	mux.HandleFunc("/health", h.Health)
 	mux.HandleFunc("/elo", h.GetElo)
 	mux.HandleFunc("/elo/match/create", h.CreateMatch)
+	mux.HandleFunc("/elo/match/challenge", h.CreateChallenge)
+	mux.HandleFunc("/elo/match/accept", h.AcceptChallenge)
+	mux.HandleFunc("/elo/match/pending", h.ListPendingChallenges)
 	mux.HandleFunc("/elo/match", h.GetMatch)
 	mux.HandleFunc("/elo/match/ready", h.SetMatchReady)
 	mux.HandleFunc("/elo/match/resolve", h.ResolveMatch)

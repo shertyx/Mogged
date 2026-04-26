@@ -3,11 +3,15 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"sync"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/websocket"
 )
 
@@ -16,9 +20,10 @@ var upgrader = websocket.Upgrader{
 }
 
 type queueEntry struct {
-	userID string
-	conn   *websocket.Conn
-	joined time.Time
+	userID  string
+	photoID string
+	conn    *websocket.Conn
+	joined  time.Time
 }
 
 type MatchQueue struct {
@@ -33,33 +38,40 @@ func NewMatchQueue() *MatchQueue {
 type matchMsg struct {
 	Type       string  `json:"type"`
 	MatchID    string  `json:"match_id,omitempty"`
-	Opponent   string  `json:"opponent,omitempty"`
 	Message    string  `json:"message,omitempty"`
-	Round      int     `json:"round,omitempty"`
 	MyScore    float64 `json:"my_score,omitempty"`
 	OppScore   float64 `json:"opp_score,omitempty"`
 	WinnerIsMe bool    `json:"winner_is_me,omitempty"`
+	MyPhoto    string  `json:"my_photo,omitempty"`
+	OppPhoto   string  `json:"opp_photo,omitempty"`
 }
 
-type photoSelectMsg struct {
-	PhotoIDs []string `json:"photo_ids"`
+type joinMsg struct {
+	Type    string `json:"type"`
+	PhotoID string `json:"photo_id"`
+	Token   string `json:"token"`
 }
 
-type roundInput struct {
-	PhotoA      string  `json:"photo_a"`
-	PhotoB      string  `json:"photo_b"`
-	ScoreA      float64 `json:"score_a"`
-	ScoreB      float64 `json:"score_b"`
-	WinnerPhoto string  `json:"winner_photo"`
-}
-
-func (q *MatchQueue) HandleMatchmaking(eloServiceURL string, userServiceURL string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		userID := r.Header.Get("X-User-ID")
-		if userID == "" {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
-			return
+func parseJWTUserID(tokenStr, secret string) (string, error) {
+	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
 		}
+		return []byte(secret), nil
+	})
+	if err != nil || !token.Valid {
+		return "", fmt.Errorf("invalid token")
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", fmt.Errorf("invalid claims")
+	}
+	userID, _ := claims["sub"].(string)
+	return userID, nil
+}
+
+func (q *MatchQueue) HandleMatchmaking(eloServiceURL, faceServiceURL, userServiceURL, jwtSecret string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -67,12 +79,37 @@ func (q *MatchQueue) HandleMatchmaking(eloServiceURL string, userServiceURL stri
 			return
 		}
 
-		entry := &queueEntry{userID: userID, conn: conn, joined: time.Now()}
+		// Read join message with photo_id before entering queue
+		conn.SetReadDeadline(time.Now().Add(30 * time.Second))
+		_, raw, err := conn.ReadMessage()
+		if err != nil {
+			conn.WriteJSON(matchMsg{Type: "error", Message: "expected join message"})
+			conn.Close()
+			return
+		}
+		var join joinMsg
+		if err := json.Unmarshal(raw, &join); err != nil || join.Type != "join" || join.PhotoID == "" {
+			conn.WriteJSON(matchMsg{Type: "error", Message: "invalid join message"})
+			conn.Close()
+			return
+		}
+		conn.SetReadDeadline(time.Time{})
+
+		userID, err := parseJWTUserID(join.Token, jwtSecret)
+		if err != nil || userID == "" {
+			conn.WriteJSON(matchMsg{Type: "error", Message: "unauthorized"})
+			conn.Close()
+			return
+		}
+
+		entry := &queueEntry{userID: userID, photoID: join.PhotoID, conn: conn, joined: time.Now()}
 
 		q.mu.Lock()
 		if q.waiting == nil {
 			q.waiting = entry
 			q.mu.Unlock()
+
+			conn.WriteJSON(matchMsg{Type: "waiting"})
 
 			// Wait up to 5 minutes for an opponent
 			conn.SetReadDeadline(time.Now().Add(5 * time.Minute))
@@ -103,137 +140,139 @@ func (q *MatchQueue) HandleMatchmaking(eloServiceURL string, userServiceURL stri
 			return
 		}
 
-		// Notify both players — they will send photo_ids after receiving "matched"
-		opponent.conn.WriteJSON(matchMsg{Type: "matched", MatchID: matchID, Opponent: userID})
-		conn.WriteJSON(matchMsg{Type: "matched", MatchID: matchID, Opponent: opponent.userID})
+		opponent.conn.WriteJSON(matchMsg{Type: "matched", MatchID: matchID})
+		conn.WriteJSON(matchMsg{Type: "matched", MatchID: matchID})
 
-		// Read photo selections from both players concurrently
-		type selectionResult struct {
-			photoIDs []string
-			err      error
+		opponent.conn.WriteJSON(matchMsg{Type: "analyzing"})
+		conn.WriteJSON(matchMsg{Type: "analyzing"})
+
+		// Analyze both photos concurrently
+		type analyzeResult struct {
+			score float64
+			s3Key string
+			err   error
 		}
-		aCh := make(chan selectionResult, 1)
-		bCh := make(chan selectionResult, 1)
 
-		readSelection := func(c *websocket.Conn, ch chan selectionResult) {
-			c.SetReadDeadline(time.Now().Add(2 * time.Minute))
-			_, msg, err := c.ReadMessage()
+		getS3Key := func(photoID string) (string, error) {
+			resp, err := http.Get(userServiceURL + "/user/photos/by-id?photo_id=" + photoID)
 			if err != nil {
-				ch <- selectionResult{err: err}
-				return
+				return "", err
 			}
-			var sel photoSelectMsg
-			if err := json.Unmarshal(msg, &sel); err != nil || len(sel.PhotoIDs) != 3 {
-				ch <- selectionResult{err: err}
-				return
+			defer resp.Body.Close()
+			var photo struct {
+				S3Key string `json:"s3_key"`
 			}
-			ch <- selectionResult{photoIDs: sel.PhotoIDs}
+			json.NewDecoder(resp.Body).Decode(&photo)
+			if photo.S3Key == "" {
+				return "", fmt.Errorf("s3_key not found for photo %s", photoID)
+			}
+			return photo.S3Key, nil
 		}
 
-		go readSelection(opponent.conn, aCh)
-		go readSelection(conn, bCh)
+		analyzeStored := func(photoID, userIDForHeader string) analyzeResult {
+			s3Key, err := getS3Key(photoID)
+			if err != nil || s3Key == "" {
+				return analyzeResult{err: err}
+			}
+			var buf bytes.Buffer
+			mw := multipart.NewWriter(&buf)
+			_ = mw.WriteField("photo_id", photoID)
+			_ = mw.WriteField("s3_key", s3Key)
+			mw.Close()
+			req, err := http.NewRequest(http.MethodPost, faceServiceURL+"/face/photos/analyze-stored", &buf)
+			if err != nil {
+				return analyzeResult{err: err}
+			}
+			req.Header.Set("Content-Type", mw.FormDataContentType())
+			req.Header.Set("X-User-ID", userIDForHeader)
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				return analyzeResult{err: err}
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusOK {
+				b, _ := io.ReadAll(resp.Body)
+				return analyzeResult{err: fmt.Errorf("face-service: %s", b)}
+			}
+			var result struct {
+				ChadScore float64 `json:"chad_score"`
+			}
+			json.NewDecoder(resp.Body).Decode(&result)
+			return analyzeResult{score: result.ChadScore, s3Key: s3Key}
+		}
 
-		aResult := <-aCh
-		bResult := <-bCh
+		aCh := make(chan analyzeResult, 1)
+		bCh := make(chan analyzeResult, 1)
+		go func() { aCh <- analyzeStored(opponent.photoID, opponent.userID) }()
+		go func() { bCh <- analyzeStored(entry.photoID, entry.userID) }()
+		aRes, bRes := <-aCh, <-bCh
 
-		if aResult.err != nil || bResult.err != nil {
-			opponent.conn.WriteJSON(matchMsg{Type: "error", Message: "photo selection failed"})
-			conn.WriteJSON(matchMsg{Type: "error", Message: "photo selection failed"})
+		if aRes.err != nil || bRes.err != nil {
+			opponent.conn.WriteJSON(matchMsg{Type: "error", Message: "photo analysis failed"})
+			conn.WriteJSON(matchMsg{Type: "error", Message: "photo analysis failed"})
 			opponent.conn.Close()
 			conn.Close()
 			return
 		}
 
-		// Fetch chad scores for all selected photos
-		aScores, err := fetchPhotoScores(userServiceURL, aResult.photoIDs)
-		if err != nil {
-			log.Println("fetch scores player A:", err)
-			opponent.conn.WriteJSON(matchMsg{Type: "error", Message: "failed to fetch scores"})
-			conn.WriteJSON(matchMsg{Type: "error", Message: "failed to fetch scores"})
-			opponent.conn.Close()
-			conn.Close()
-			return
-		}
-		bScores, err := fetchPhotoScores(userServiceURL, bResult.photoIDs)
-		if err != nil {
-			log.Println("fetch scores player B:", err)
-			opponent.conn.WriteJSON(matchMsg{Type: "error", Message: "failed to fetch scores"})
-			conn.WriteJSON(matchMsg{Type: "error", Message: "failed to fetch scores"})
-			opponent.conn.Close()
-			conn.Close()
-			return
-		}
-
-		// Play 3 rounds — highest chad_score wins each round
-		aWins, bWins := 0, 0
-		var rounds []roundInput
-
-		for i := 0; i < 3; i++ {
-			sa := aScores[i]
-			sb := bScores[i]
-			winnerPhoto := aResult.photoIDs[i]
-			if sb > sa {
-				winnerPhoto = bResult.photoIDs[i]
-				bWins++
-			} else {
-				aWins++
+		// Get signed URLs for result display
+		getSignedURL := func(s3Key string) string {
+			body, _ := json.Marshal(map[string][]string{"s3_keys": {s3Key}})
+			resp, err := http.Post(faceServiceURL+"/face/photos/signed-urls", "application/json", bytes.NewReader(body))
+			if err != nil {
+				return ""
 			}
-			rounds = append(rounds, roundInput{
-				PhotoA:      aResult.photoIDs[i],
-				PhotoB:      bResult.photoIDs[i],
-				ScoreA:      sa,
-				ScoreB:      sb,
-				WinnerPhoto: winnerPhoto,
-			})
-			opponent.conn.WriteJSON(matchMsg{Type: "round", Round: i + 1, MyScore: sa, OppScore: sb, WinnerIsMe: sa >= sb})
-			conn.WriteJSON(matchMsg{Type: "round", Round: i + 1, MyScore: sb, OppScore: sa, WinnerIsMe: sb >= sa})
+			defer resp.Body.Close()
+			var result struct {
+				URLs map[string]string `json:"urls"`
+			}
+			json.NewDecoder(resp.Body).Decode(&result)
+			return result.URLs[s3Key]
 		}
 
-		aWon := aWins > bWins
+		aURL := getSignedURL(aRes.s3Key)
+		bURL := getSignedURL(bRes.s3Key)
 
-		// Resolve match in elo-service (updates ELO scores)
+		aWon := aRes.score >= bRes.score
+
+		// Resolve match
 		resolveBody := map[string]interface{}{
 			"match_id": matchID,
 			"player_a": opponent.userID,
 			"player_b": userID,
-			"rounds":   rounds,
+			"rounds": []map[string]interface{}{
+				{"photo_a": opponent.photoID, "photo_b": entry.photoID, "score_a": aRes.score, "score_b": bRes.score},
+			},
 		}
-		if err := resolveMatch(eloServiceURL, resolveBody); err != nil {
-			log.Println("resolve match:", err)
-		}
+		resolveMatch(eloServiceURL, resolveBody)
 
-		// Send final result
-		opponent.conn.WriteJSON(matchMsg{Type: "match_end", WinnerIsMe: aWon})
-		conn.WriteJSON(matchMsg{Type: "match_end", WinnerIsMe: !aWon})
+		// Mark photos as used
+		markUsed := func(photoID string) {
+			b, _ := json.Marshal(map[string]string{"photo_id": photoID})
+			req, _ := http.NewRequest(http.MethodPatch, userServiceURL+"/user/photos/mark-used", bytes.NewReader(b))
+			req.Header.Set("Content-Type", "application/json")
+			resp, err := http.DefaultClient.Do(req)
+			if err == nil {
+				resp.Body.Close()
+			}
+		}
+		markUsed(opponent.photoID)
+		markUsed(entry.photoID)
+
+		opponent.conn.WriteJSON(matchMsg{
+			Type: "match_end", WinnerIsMe: aWon,
+			MyScore: aRes.score, OppScore: bRes.score,
+			MyPhoto: aURL, OppPhoto: bURL,
+		})
+		conn.WriteJSON(matchMsg{
+			Type: "match_end", WinnerIsMe: !aWon,
+			MyScore: bRes.score, OppScore: aRes.score,
+			MyPhoto: bURL, OppPhoto: aURL,
+		})
 
 		opponent.conn.Close()
 		conn.Close()
 	}
-}
-
-func fetchPhotoScores(userServiceURL string, photoIDs []string) ([]float64, error) {
-	scores := make([]float64, len(photoIDs))
-	for i, id := range photoIDs {
-		resp, err := http.Get(userServiceURL + "/user/photos?photo_id=" + id)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-		var photos []struct {
-			ID        string  `json:"id"`
-			ChadScore float64 `json:"chad_score"`
-		}
-		if err := json.NewDecoder(resp.Body).Decode(&photos); err != nil {
-			return nil, err
-		}
-		for _, p := range photos {
-			if p.ID == id {
-				scores[i] = p.ChadScore
-				break
-			}
-		}
-	}
-	return scores, nil
 }
 
 func createRealtimeMatch(eloServiceURL, playerA, playerB string) (string, error) {
@@ -242,8 +281,7 @@ func createRealtimeMatch(eloServiceURL, playerA, playerB string) (string, error)
 		"player_b": playerB,
 		"mode":     "realtime",
 	})
-	resp, err := http.Post(eloServiceURL+"/elo/match/create", "application/json",
-		bytes.NewReader(body))
+	resp, err := http.Post(eloServiceURL+"/elo/match/create", "application/json", bytes.NewReader(body))
 	if err != nil {
 		return "", err
 	}

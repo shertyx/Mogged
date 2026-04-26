@@ -38,3 +38,11 @@ export async function setUsername(username: string): Promise<void> {
     body: JSON.stringify({ username }),
   });
 }
+
+export async function listUnanalyzedPhotos() {
+  return apiRequest<Photo[]>('/user/photos/unanalyzed');
+}
+
+export async function getUserByUsername(username: string) {
+  return apiRequest<{ id: string; username: string }>(`/user/by-username?username=${encodeURIComponent(username)}`);
+}

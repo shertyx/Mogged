@@ -144,3 +144,51 @@ func (r *UserRepo) UpdatePhotoScore(photoID string, chadScore float64, features 
 	`, chadScore, features, photoID)
 	return err
 }
+
+func (r *UserRepo) GetUserByUsername(username string) (string, error) {
+	var id string
+	err := r.db.QueryRow(`SELECT id FROM users.profiles WHERE username = $1`, username).Scan(&id)
+	if err == sql.ErrNoRows {
+		return "", nil
+	}
+	return id, err
+}
+
+func (r *UserRepo) ListUnanalyzedPhotos(userID string) ([]Photo, error) {
+	rows, err := r.db.Query(`
+		SELECT id, user_id, s3_key, chad_score, features, hash, used, uploaded_at
+		FROM users.photos WHERE user_id = $1 AND chad_score IS NULL AND used = false
+		ORDER BY uploaded_at DESC
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var photos []Photo
+	for rows.Next() {
+		var p Photo
+		if err := rows.Scan(&p.ID, &p.UserID, &p.S3Key, &p.ChadScore,
+			&p.Features, &p.Hash, &p.Used, &p.UploadedAt); err != nil {
+			return nil, err
+		}
+		photos = append(photos, p)
+	}
+	return photos, nil
+}
+
+func (r *UserRepo) MarkPhotoUsed(photoID string) error {
+	_, err := r.db.Exec(`UPDATE users.photos SET used = true WHERE id = $1`, photoID)
+	return err
+}
+
+func (r *UserRepo) GetPhotoByID(photoID string) (*Photo, error) {
+	var p Photo
+	err := r.db.QueryRow(`
+		SELECT id, user_id, s3_key, chad_score, features, hash, used, uploaded_at
+		FROM users.photos WHERE id = $1
+	`, photoID).Scan(&p.ID, &p.UserID, &p.S3Key, &p.ChadScore, &p.Features, &p.Hash, &p.Used, &p.UploadedAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return &p, err
+}

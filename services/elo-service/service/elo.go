@@ -13,12 +13,15 @@ const kFactor = 32
 type EloRepoIface interface {
 	GetElo(userID string) (int, error)
 	UpsertElo(userID string, score int, tier string) error
-	CreateMatch(playerA, playerB, mode string, expiresAt *time.Time) (string, error)
+	CreateMatch(playerA, playerB, mode string, expiresAt *time.Time, photoAID *string) (string, error)
 	GetMatch(matchID string) (*repository.Match, error)
 	SetMatchReady(matchID string) error
+	SetMatchPhotos(matchID, photoAID, photoBID string) error
 	CompleteMatch(matchID, winnerID string) error
 	ExpireStaleMatches() ([]repository.Match, error)
 	InsertRound(matchID, photoA, photoB, winnerPhoto string, round int) error
+	ListPendingChallenges(userID string) ([]repository.Match, error)
+	GetMatchPhotos(matchID string) (photoAID, photoBID string, err error)
 }
 
 type EloService struct {
@@ -69,11 +72,10 @@ func (s *EloService) GetElo(userID string) (int, string, error) {
 	return score, TierFromELO(score), nil
 }
 
-// ResolveRounds determines match winner from 3 rounds (best of 2).
-// rounds is a slice of {photoA, photoB, scoreA, scoreB}.
+// ResolveMatch determines match winner from rounds (1 round = highest score wins).
 func (s *EloService) ResolveMatch(matchID, playerA, playerB string, rounds []RoundInput) (string, error) {
-	if len(rounds) != 3 {
-		return "", fmt.Errorf("expected 3 rounds, got %d", len(rounds))
+	if len(rounds) < 1 {
+		return "", fmt.Errorf("expected at least 1 round, got 0")
 	}
 
 	winsA, winsB := 0, 0
@@ -92,7 +94,7 @@ func (s *EloService) ResolveMatch(matchID, playerA, playerB string, rounds []Rou
 	}
 
 	var winnerID, loserID string
-	if winsA >= 2 {
+	if winsA >= winsB {
 		winnerID, loserID = playerA, playerB
 	} else {
 		winnerID, loserID = playerB, playerA
@@ -135,7 +137,28 @@ func (s *EloService) CreateMatch(playerA, playerB, mode string) (string, error) 
 		t := time.Now().Add(24 * time.Hour)
 		expiresAt = &t
 	}
-	return s.repo.CreateMatch(playerA, playerB, mode, expiresAt)
+	return s.repo.CreateMatch(playerA, playerB, mode, expiresAt, nil)
+}
+
+func (s *EloService) CreateMatchWithPhoto(playerA, playerB, mode, photoAID string) (string, error) {
+	var expiresAt *time.Time
+	if mode == "async" {
+		t := time.Now().Add(24 * time.Hour)
+		expiresAt = &t
+	}
+	return s.repo.CreateMatch(playerA, playerB, mode, expiresAt, &photoAID)
+}
+
+func (s *EloService) ListPendingChallenges(userID string) ([]repository.Match, error) {
+	return s.repo.ListPendingChallenges(userID)
+}
+
+func (s *EloService) SetMatchPhotos(matchID, photoAID, photoBID string) error {
+	return s.repo.SetMatchPhotos(matchID, photoAID, photoBID)
+}
+
+func (s *EloService) GetMatchPhotos(matchID string) (string, string, error) {
+	return s.repo.GetMatchPhotos(matchID)
 }
 
 func (s *EloService) SetMatchReady(matchID string) error {

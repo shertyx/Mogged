@@ -17,6 +17,10 @@ type UserRepoIface interface {
 	DeletePhoto(photoID, userID string) (string, error)
 	UpdatePhotoScore(photoID string, score float64, features []byte) error
 	SetUsername(userID, username string) error
+	GetUserByUsername(username string) (string, error)
+	ListUnanalyzedPhotos(userID string) ([]repository.Photo, error)
+	MarkPhotoUsed(photoID string) error
+	GetPhotoByID(photoID string) (*repository.Photo, error)
 }
 
 type UserService struct {
@@ -82,4 +86,20 @@ func (s *UserService) SetUsername(userID, username string) error {
 		}
 	}
 	return s.repo.SetUsername(userID, username)
+}
+
+func (s *UserService) GetUserByUsername(username string) (string, error) {
+	return s.repo.GetUserByUsername(username)
+}
+
+func (s *UserService) ListUnanalyzedPhotos(userID string) ([]repository.Photo, error) {
+	return s.repo.ListUnanalyzedPhotos(userID)
+}
+
+func (s *UserService) MarkPhotoUsed(photoID string) error {
+	return s.repo.MarkPhotoUsed(photoID)
+}
+
+func (s *UserService) GetPhotoByID(photoID string) (*repository.Photo, error) {
+	return s.repo.GetPhotoByID(photoID)
 }

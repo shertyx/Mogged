@@ -17,6 +17,10 @@ type UserServiceIface interface {
 	DeletePhoto(photoID, userID string) (string, error)
 	UpdatePhotoScore(photoID string, score float64, features []byte) error
 	SetUsername(userID, username string) error
+	GetUserByUsername(username string) (string, error)
+	ListUnanalyzedPhotos(userID string) ([]repository.Photo, error)
+	MarkPhotoUsed(photoID string) error
+	GetPhotoByID(photoID string) (*repository.Photo, error)
 }
 
 type UserHandler struct {
@@ -184,6 +188,78 @@ func (h *UserHandler) UpdatePhotoScore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.svc.UpdatePhotoScore(body.PhotoID, body.Score, featBytes); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *UserHandler) GetUserByUsername(w http.ResponseWriter, r *http.Request) {
+	username := r.URL.Query().Get("username")
+	if username == "" {
+		http.Error(w, "missing username", http.StatusBadRequest)
+		return
+	}
+	id, err := h.svc.GetUserByUsername(username)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if id == "" {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"id": id, "username": username})
+}
+
+func (h *UserHandler) ListUnanalyzedPhotos(w http.ResponseWriter, r *http.Request) {
+	userID := r.Header.Get("X-User-ID")
+	if userID == "" {
+		http.Error(w, "missing user id", http.StatusBadRequest)
+		return
+	}
+	photos, err := h.svc.ListUnanalyzedPhotos(userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(photos)
+}
+
+func (h *UserHandler) GetPhotoByID(w http.ResponseWriter, r *http.Request) {
+	photoID := r.URL.Query().Get("photo_id")
+	if photoID == "" {
+		http.Error(w, "missing photo_id", http.StatusBadRequest)
+		return
+	}
+	photo, err := h.svc.GetPhotoByID(photoID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if photo == nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(photo)
+}
+
+func (h *UserHandler) MarkPhotoUsed(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPatch {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var body struct {
+		PhotoID string `json:"photo_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.PhotoID == "" {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	if err := h.svc.MarkPhotoUsed(body.PhotoID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
