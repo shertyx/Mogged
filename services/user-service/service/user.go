@@ -16,6 +16,7 @@ type UserRepoIface interface {
 	ListPhotos(userID string) ([]repository.Photo, error)
 	DeletePhoto(photoID, userID string) (string, error)
 	UpdatePhotoScore(photoID string, score float64, features []byte) error
+	SetUsername(userID, username string) error
 }
 
 type UserService struct {
@@ -69,4 +70,16 @@ func (s *UserService) DeletePhoto(photoID, userID string) (string, error) {
 
 func (s *UserService) UpdatePhotoScore(photoID string, score float64, features []byte) error {
 	return s.repo.UpdatePhotoScore(photoID, score, features)
+}
+
+func (s *UserService) SetUsername(userID, username string) error {
+	if len(username) < 3 || len(username) > 20 {
+		return fmt.Errorf("username must be 3–20 characters")
+	}
+	for _, c := range username {
+		if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_') {
+			return fmt.Errorf("username may only contain letters, digits and underscores")
+		}
+	}
+	return s.repo.SetUsername(userID, username)
 }

@@ -34,7 +34,7 @@ func main() {
 	protected.Handle("/user/", handler.NewReverseProxy(userURL))
 	protected.Handle("/elo/", handler.NewReverseProxy(eloURL))
 	protected.Handle("/face/", handler.NewReverseProxy(faceURL))
-	protected.HandleFunc("/matchmaking", mq.HandleMatchmaking(eloURL))
+	protected.HandleFunc("/matchmaking", mq.HandleMatchmaking(eloURL, userURL))
 
 	mux.Handle("/user/", middleware.JWTAuth(jwtSecret, protected))
 	mux.Handle("/elo/", middleware.JWTAuth(jwtSecret, protected))

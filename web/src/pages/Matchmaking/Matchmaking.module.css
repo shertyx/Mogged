@@ -1,0 +1,21 @@
+.page { min-height: 100vh; background: #000; }
+.nav { padding: 20px 32px; border-bottom: 1px solid #111; }
+.back { background: none; border: none; color: #888; font-size: 0.95rem; cursor: pointer; }
+.back:hover { color: #fff; }
+.content { max-width: 480px; margin: 0 auto; padding: 40px 32px; display: flex; flex-direction: column; gap: 16px; }
+.title { color: #fff; font-size: 2rem; font-weight: 900; margin: 0 0 8px; }
+.card {
+  background: #111;
+  border: none;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+.card:hover { background: #1a1a1a; }
+.cardTitle { color: #fff; font-size: 1.2rem; font-weight: 700; }
+.cardSub { color: #666; font-size: 0.9rem; }

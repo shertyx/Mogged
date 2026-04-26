@@ -1,0 +1,29 @@
+.container {
+  background: #111;
+  border-radius: 12px;
+  padding: 16px 24px;
+  margin: 6px 0;
+}
+
+.label { color: #555; font-size: 12px; display: block; margin-bottom: 8px; }
+
+.scores {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0.4;
+}
+
+.winner { opacity: 1; }
+
+.score { color: #fff; font-size: 2.5rem; font-weight: 900; }
+.name { color: #888; font-size: 12px; }
+.vs { color: #444; font-weight: 700; }

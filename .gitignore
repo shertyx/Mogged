@@ -18,3 +18,4 @@ ai/datasets/
 # IDE
 .idea/
 .vscode/
+datasets/

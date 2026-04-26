@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Mogged",
+    "slug": "mogged",
+    "version": "1.0.0",
+    "scheme": "mogged",
+    "platforms": ["ios", "android"],
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "ios": { "supportsTablet": false },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#000000"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      ["expo-camera", { "cameraPermission": "Mogged needs camera access to capture your face." }],
+      "expo-image-picker"
+    ],
+    "extra": {
+      "apiUrl": "http://localhost:8080",
+      "eas": { "projectId": "mogged" }
+    }
+  }
+}

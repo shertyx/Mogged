@@ -1,0 +1,113 @@
+.page { min-height: 100vh; background: #000; }
+
+.nav { padding: 20px 32px; border-bottom: 1px solid #111; }
+
+.back {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.back:hover { color: #fff; }
+
+.content { max-width: 480px; margin: 0 auto; padding: 40px 32px; display: flex; flex-direction: column; gap: 24px; }
+
+.title { color: #fff; font-size: 2rem; font-weight: 900; margin: 0; }
+
+.section { display: flex; flex-direction: column; gap: 4px; }
+.username { color: #fff; font-size: 1.4rem; font-weight: 700; margin: 0; }
+.id { color: #444; font-size: 0.75rem; margin: 0; }
+
+.eloSection { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 32px 0; }
+.eloScore { color: #fff; font-size: 5rem; font-weight: 900; }
+.eloLabel { color: #555; font-size: 0.9rem; }
+
+.logoutBtn {
+  background: none;
+  border: 1px solid #333;
+  color: #888;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.logoutBtn:hover { border-color: #555; color: #aaa; }
+
+.usernameBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.usernameLabel {
+  color: #888;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.usernameWarning {
+  color: #f5a623;
+  font-size: 0.78rem;
+  margin: 0;
+}
+
+.usernameRow {
+  display: flex;
+  gap: 8px;
+}
+
+.usernameInput {
+  flex: 1;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #fff;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+
+.usernameInput:focus {
+  outline: none;
+  border-color: #555;
+}
+
+.usernameInputLocked {
+  flex: 1;
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 8px;
+  color: #555;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  cursor: not-allowed;
+  width: 100%;
+}
+
+.usernameBtn {
+  background: #fff;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.usernameBtn:disabled {
+  background: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.usernameError {
+  color: #e05252;
+  font-size: 0.78rem;
+  margin: 0;
+}

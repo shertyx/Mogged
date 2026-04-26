@@ -99,10 +99,12 @@ services:
     environment:
       POSTGRES_DSN: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
       MINIO_ENDPOINT: minio:9000
+      MINIO_PUBLIC_ENDPOINT: localhost:9000
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_BUCKET: ${MINIO_BUCKET}
       MODEL_PATH: ${MODEL_PATH}
+      USER_SERVICE_URL: http://user-service:8082
     depends_on:
       postgres:
         condition: service_healthy
@@ -110,6 +112,13 @@ services:
         condition: service_healthy
     volumes:
       - ./ai/models:/app/models:ro
+
+  web:
+    build: ./web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
 
 volumes:
   postgres_data:

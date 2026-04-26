@@ -1,0 +1,131 @@
+.card {
+  position: relative;
+  background: #111;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 10px 10px;
+  min-height: 160px;
+  gap: 6px;
+  transition: border-color 0.15s;
+}
+
+.selected { border-color: #fff; }
+
+.analyzed {
+  justify-content: flex-start;
+  padding-top: 28px;
+}
+
+.delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(200,0,0,0.85);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+  cursor: pointer;
+  font-weight: 700;
+  z-index: 2;
+}
+
+.thumb {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+}
+
+.scoreBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.scoreValue {
+  color: #fff;
+  font-weight: 900;
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.scoreLabel {
+  color: #555;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.features {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.featureRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.featureName {
+  color: #666;
+  font-size: 0.6rem;
+  width: 46px;
+  flex-shrink: 0;
+}
+
+.barBg {
+  flex: 1;
+  height: 4px;
+  background: #222;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: #fff;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.featureVal {
+  color: #555;
+  font-size: 0.6rem;
+  width: 18px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.analyzeBtn {
+  background: #fff;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.analyzeBtn:hover { background: #ddd; }
+
+.analyzingLabel {
+  color: #555;
+  font-size: 0.8rem;
+}
