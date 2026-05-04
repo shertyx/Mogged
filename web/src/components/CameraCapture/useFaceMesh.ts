@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 
-// Jawline — 8 points clés uniquement
-const JAWLINE = [234, 172, 150, 152, 379, 397, 454];
+// Jawline — 1 point sur 2 de l'ovale facial MediaPipe (moitié basse)
+const JAWLINE = [234, 132, 172, 150, 176, 152, 400, 379, 397, 361, 454];
 // Yeux — 4 coins seulement
 const LEFT_EYE  = [33, 159, 133, 145];
 const RIGHT_EYE = [362, 386, 263, 374];
