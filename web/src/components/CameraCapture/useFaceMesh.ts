@@ -1,9 +1,11 @@
 import { useEffect, useRef, useCallback } from 'react';
 
-// MediaPipe Face Mesh landmark indices
-const JAWLINE = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109];
-const LEFT_EYE = [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246];
-const RIGHT_EYE = [362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398];
+// MediaPipe Face Mesh landmark indices — sparse points only
+// Lower jawline: chin + 6 pts each side
+const JAWLINE = [152, 150, 136, 172, 58, 234, 127, 377, 400, 379, 365, 454, 356];
+// Eye corners + top/bottom only (4 pts per eye)
+const LEFT_EYE  = [33, 133, 159, 145];
+const RIGHT_EYE = [362, 263, 386, 374];
 
 type FaceMeshGlobal = {
   FaceMesh: new (opts: object) => {
@@ -116,9 +118,9 @@ export function useFaceMesh(
         const w = canvas.width;
 
         // Video is mirrored via CSS scaleX(-1), so we flip x coords to match display
-        drawDots(ctx, lm, JAWLINE, '#ff2222', 3.5, true, w);
-        drawDots(ctx, lm, LEFT_EYE, '#ff2222', 2.8, true, w);
-        drawDots(ctx, lm, RIGHT_EYE, '#ff2222', 2.8, true, w);
+        drawDots(ctx, lm, JAWLINE, '#ff2222', 5, true, w);
+        drawDots(ctx, lm, LEFT_EYE, '#ff2222', 4, true, w);
+        drawDots(ctx, lm, RIGHT_EYE, '#ff2222', 4, true, w);
       });
 
       runningRef.current = true;
