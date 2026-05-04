@@ -186,7 +186,7 @@ export function CameraCapture({ onCapture, onCancel, label, autoSubmit }: Props)
         {phase === 'captured' && capturedUrl && (
           <>
             <div className={styles.viewfinder}>
-              <img src={capturedUrl} className={styles.video} alt="capture" />
+              <img src={capturedUrl} className={`${styles.video} ${styles.videoMirror}`} alt="capture" />
             </div>
             <div className={styles.controls}>
               <button className={styles.cancelBtn} onClick={retake}>Reprendre</button>
@@ -200,7 +200,7 @@ export function CameraCapture({ onCapture, onCancel, label, autoSubmit }: Props)
         {/* Analyzing */}
         {phase === 'analyzing' && (
           <div className={styles.analyzing}>
-            {capturedUrl && <img src={capturedUrl} className={styles.analyzeThumb} alt="" />}
+            {capturedUrl && <img src={capturedUrl} className={`${styles.analyzeThumb} ${styles.videoMirror}`} alt="" />}
             <MogMeter analyzing={true} score={undefined} />
             <p className={styles.analyzeSubtext}>Détection jawline & symétrie en cours…</p>
           </div>
