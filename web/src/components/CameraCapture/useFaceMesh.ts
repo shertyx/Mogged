@@ -26,17 +26,27 @@ function drawDots(
   indices: number[],
   color: string,
   radius: number,
-  mirrored: boolean,
-  w: number,
+  vw: number,
+  vh: number,
 ) {
+  // object-fit: cover transform: scale video to fill canvas, centered
+  const cw = ctx.canvas.width;
+  const ch = ctx.canvas.height;
+  const scale = Math.max(cw / vw, ch / vh);
+  const ox = (cw - vw * scale) / 2;
+  const oy = (ch - vh * scale) / 2;
+
   ctx.fillStyle = color;
   ctx.shadowColor = color;
-  ctx.shadowBlur = 8;
+  ctx.shadowBlur = 10;
   for (const idx of indices) {
     const lm = landmarks[idx];
     if (!lm) continue;
-    const x = mirrored ? w - lm.x * w : lm.x * w;
-    const y = lm.y * ctx.canvas.height;
+    // landmark coords normalized [0,1] → video pixels → display pixels
+    const rawX = lm.x * vw * scale + ox;
+    const y = lm.y * vh * scale + oy;
+    // mirror to match CSS scaleX(-1) on the video
+    const x = cw - rawX;
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
     ctx.fill();
@@ -83,8 +93,9 @@ export function useFaceMesh(
       const video = videoRef.current;
       const canvas = canvasRef.current;
       if (!video || !canvas || video.readyState < 2) return;
-      canvas.width = video.videoWidth || video.clientWidth;
-      canvas.height = video.videoHeight || video.clientHeight;
+      // canvas resolution = displayed container size (not native camera res)
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
       await faceMesh.send({ image: video });
     },
     [videoRef, canvasRef],
@@ -115,12 +126,14 @@ export function useFaceMesh(
         if (!faces || faces.length === 0) return;
 
         const lm = faces[0];
-        const w = canvas.width;
+        const video = videoRef.current;
+        if (!video) return;
+        const vw = video.videoWidth || video.clientWidth;
+        const vh = video.videoHeight || video.clientHeight;
 
-        // Video is mirrored via CSS scaleX(-1), so we flip x coords to match display
-        drawDots(ctx, lm, JAWLINE, '#ff2222', 5, true, w);
-        drawDots(ctx, lm, LEFT_EYE, '#ff2222', 4, true, w);
-        drawDots(ctx, lm, RIGHT_EYE, '#ff2222', 4, true, w);
+        drawDots(ctx, lm, JAWLINE, '#ff2222', 5, vw, vh);
+        drawDots(ctx, lm, LEFT_EYE, '#ff2222', 4, vw, vh);
+        drawDots(ctx, lm, RIGHT_EYE, '#ff2222', 4, vw, vh);
       });
 
       runningRef.current = true;
