@@ -1,13 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
 import { usePhotos } from '@/hooks/usePhotos';
 import { ConsentModal } from '@/components/ConsentModal/ConsentModal';
 import { BottomNav } from '@/components/BottomNav/BottomNav';
 import { FeedCard } from '@/components/FeedCard/FeedCard';
 import { canUpload, upsertProfile, getProfile } from '@/api/user';
-import { getFeed, type FeedEntry } from '@/api/elo';
+import { getFeed, getElo, type FeedEntry } from '@/api/elo';
 import { getSignedUrls } from '@/api/face';
 import styles from './Photos.module.css';
+
+const TIER_COLORS: Record<string, string> = {
+  Bronze: '#cd7f32', Silver: '#a8a9ad', Gold: '#ffd700',
+  Platinum: '#4dd0e1', Diamond: '#b388ff', Master: '#f06292',
+  Grandmaster: '#ff5252', 'Top 500': '#ff1744',
+};
+function tierColor(tierName: string) {
+  const base = tierName.split(' ')[0];
+  return TIER_COLORS[base] ?? '#f97316';
+}
 
 const SIGMA_QUOTES = [
   'SIGMA GRINDSET 🗿', 'MEWING DAILY 🦷', 'JAW ON GRANITE 💪',
@@ -18,16 +29,19 @@ export default function Photos() {
   const { load, upload } = usePhotos();
   const username = useAuthStore((s) => s.username);
   const userID = useAuthStore((s) => s.userID);
+  const navigate = useNavigate();
   const [showConsent, setShowConsent] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [quote] = useState(() => SIGMA_QUOTES[Math.floor(Math.random() * SIGMA_QUOTES.length)]);
   const [feed, setFeed] = useState<(FeedEntry & { url_a?: string; url_b?: string })[]>([]);
   const [feedLoading, setFeedLoading] = useState(true);
+  const [eloData, setEloData] = useState<{ score: number; tier_name: string } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     load();
     loadFeed();
+    if (userID) getElo(userID).then(setEloData).catch(() => {});
   }, []);
 
   const loadFeed = async () => {
@@ -79,9 +93,27 @@ export default function Photos() {
           <span className={styles.headerSub}>{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
         </div>
         <div className={styles.headerRight}>
-          {username && <span className={styles.username}>{username}</span>}
+          {username && <span className={styles.username} onClick={() => navigate('/profile')} style={{ cursor: 'pointer' }}>{username}</span>}
+          {eloData && (
+            <span className={styles.eloChip}>
+              <span className={styles.eloTier} style={{ color: tierColor(eloData.tier_name) }}>{eloData.tier_name}</span>
+              <span className={styles.eloScore}>{eloData.score}</span>
+            </span>
+          )}
         </div>
       </header>
+
+      {/* Actions rapides */}
+      <div className={styles.quickActions}>
+        <button className={styles.actionBtn} onClick={() => navigate('/analyze')}>
+          <span className={styles.actionIcon}>🔬</span>
+          <span className={styles.actionLabel}>ANALYSER</span>
+        </button>
+        <button className={`${styles.actionBtn} ${styles.actionBtnPrimary}`} onClick={() => navigate('/friends')}>
+          <span className={styles.actionIcon}>⚔️</span>
+          <span className={styles.actionLabel}>DÉFIER</span>
+        </button>
+      </div>
 
       {/* Quote banner */}
       <div className={styles.quoteBanner}>
