@@ -29,7 +29,7 @@ function drawDots(
 ) {
   ctx.fillStyle = color;
   ctx.shadowColor = color;
-  ctx.shadowBlur = 6;
+  ctx.shadowBlur = 8;
   for (const idx of indices) {
     const lm = landmarks[idx];
     if (!lm) continue;
@@ -145,14 +145,9 @@ export function useFaceMesh(
         const w = canvas.width;
 
         // Video is mirrored via CSS scaleX(-1), so we flip x coords to match display
-        connectDots(ctx, lm, JAWLINE, 'rgba(249,115,22,0.9)', true, w, false);
-        drawDots(ctx, lm, JAWLINE, 'rgba(249,115,22,1)', 1.8, true, w);
-
-        connectDots(ctx, lm, LEFT_EYE, 'rgba(96,165,250,0.9)', true, w, true);
-        drawDots(ctx, lm, LEFT_EYE, 'rgba(96,165,250,1)', 1.5, true, w);
-
-        connectDots(ctx, lm, RIGHT_EYE, 'rgba(96,165,250,0.9)', true, w, true);
-        drawDots(ctx, lm, RIGHT_EYE, 'rgba(96,165,250,1)', 1.5, true, w);
+        drawDots(ctx, lm, JAWLINE, '#ff2222', 3.5, true, w);
+        drawDots(ctx, lm, LEFT_EYE, '#ff2222', 2.8, true, w);
+        drawDots(ctx, lm, RIGHT_EYE, '#ff2222', 2.8, true, w);
       });
 
       runningRef.current = true;
