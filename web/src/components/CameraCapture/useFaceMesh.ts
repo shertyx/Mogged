@@ -1,8 +1,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 
-// Jawline angulaire : joue → angle mandibulaire → coin menton → menton → côté opposé
-// Lignes droites entre points clés = effet carré, pas ovale lissé
-const JAWLINE = [234, 172, 136, 150, 152, 379, 365, 397, 454];
+// Contour mandibulaire complet — moitié basse de l'ovale facial MediaPipe
+// Ordre : tempe gauche → mâchoire gauche → menton → mâchoire droite → tempe droite
+const JAWLINE = [234, 93, 132, 58, 172, 136, 150, 149, 176, 148, 152, 377, 400, 379, 365, 397, 288, 361, 323, 454];
 // Full eye contours
 const LEFT_EYE  = [33, 246, 161, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145, 144, 163, 7];
 const RIGHT_EYE = [362, 398, 384, 385, 386, 387, 388, 466, 263, 249, 390, 373, 374, 380, 381, 382];
@@ -45,14 +45,24 @@ function connectLine(
   ctx.globalAlpha = 0.35;
   ctx.shadowColor = color;
   ctx.shadowBlur = 4;
+  const pts = indices
+    .map((idx) => landmarks[idx])
+    .filter(Boolean)
+    .map((lm) => ({
+      x: cw - (lm.x * vw * scale + ox),
+      y: lm.y * vh * scale + oy,
+    }));
+  if (pts.length < 2) return;
+
   ctx.beginPath();
-  indices.forEach((idx, i) => {
-    const lm = landmarks[idx];
-    if (!lm) return;
-    const x = cw - (lm.x * vw * scale + ox);
-    const y = lm.y * vh * scale + oy;
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  });
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length - 1; i++) {
+    const mx = (pts[i].x + pts[i + 1].x) / 2;
+    const my = (pts[i].y + pts[i + 1].y) / 2;
+    ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+  }
+  const last = pts[pts.length - 1];
+  ctx.lineTo(last.x, last.y);
   if (closed) ctx.closePath();
   ctx.stroke();
   ctx.globalAlpha = 1;
