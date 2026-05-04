@@ -42,35 +42,6 @@ function drawDots(
   ctx.shadowBlur = 0;
 }
 
-function connectDots(
-  ctx: CanvasRenderingContext2D,
-  landmarks: { x: number; y: number }[],
-  indices: number[],
-  color: string,
-  mirrored: boolean,
-  w: number,
-  closed = false,
-) {
-  const pts = indices.map((idx) => {
-    const lm = landmarks[idx];
-    const x = mirrored ? w - lm.x * w : lm.x * w;
-    const y = lm.y * ctx.canvas.height;
-    return { x, y };
-  });
-  if (pts.length < 2) return;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1.2;
-  ctx.globalAlpha = 0.55;
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 4;
-  ctx.beginPath();
-  ctx.moveTo(pts[0].x, pts[0].y);
-  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
-  if (closed) ctx.closePath();
-  ctx.stroke();
-  ctx.globalAlpha = 1;
-  ctx.shadowBlur = 0;
-}
 
 async function loadFaceMesh(): Promise<InstanceType<FaceMeshGlobal['FaceMesh']>> {
   if (!window.FaceMesh) {
