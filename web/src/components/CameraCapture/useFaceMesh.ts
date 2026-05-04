@@ -1,16 +1,13 @@
 import { useEffect, useRef, useCallback } from 'react';
 
-// Contour mandibulaire complet — moitié basse de l'ovale facial MediaPipe
-// Ordre : tempe gauche → mâchoire gauche → menton → mâchoire droite → tempe droite
-const JAWLINE = [234, 93, 132, 58, 172, 136, 150, 149, 176, 148, 152, 377, 400, 379, 365, 397, 288, 361, 323, 454];
-// Full eye contours
-const LEFT_EYE  = [33, 246, 161, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145, 144, 163, 7];
-const RIGHT_EYE = [362, 398, 384, 385, 386, 387, 388, 466, 263, 249, 390, 373, 374, 380, 381, 382];
-// Eyebrows
-const LEFT_BROW  = [70, 63, 105, 66, 107];
-const RIGHT_BROW = [336, 296, 334, 293, 300];
-// Nose bridge + tip
-const NOSE = [6, 197, 195, 4, 1, 2, 98, 327];
+// Jawline — 8 points clés uniquement
+const JAWLINE = [234, 172, 150, 152, 379, 397, 454];
+// Yeux — 4 coins seulement
+const LEFT_EYE  = [33, 159, 133, 145];
+const RIGHT_EYE = [362, 386, 263, 374];
+// Sourcils — 3 pts
+const LEFT_BROW  = [70, 105, 107];
+const RIGHT_BROW = [336, 334, 300];
 
 type FaceMeshGlobal = {
   FaceMesh: new (opts: object) => {
@@ -41,10 +38,10 @@ function connectLine(
   const oy = (ch - vh * scale) / 2;
 
   ctx.strokeStyle = color;
-  ctx.lineWidth = 1;
-  ctx.globalAlpha = 0.35;
+  ctx.lineWidth = 0.8;
+  ctx.globalAlpha = 0.5;
   ctx.shadowColor = color;
-  ctx.shadowBlur = 4;
+  ctx.shadowBlur = 3;
   const pts = indices
     .map((idx) => landmarks[idx])
     .filter(Boolean)
@@ -87,7 +84,7 @@ function drawDots(
 
   ctx.fillStyle = color;
   ctx.shadowColor = color;
-  ctx.shadowBlur = 10;
+  ctx.shadowBlur = 6;
   for (const idx of indices) {
     const lm = landmarks[idx];
     if (!lm) continue;
@@ -180,20 +177,14 @@ export function useFaceMesh(
         const vw = video.videoWidth || video.clientWidth;
         const vh = video.videoHeight || video.clientHeight;
 
-        // Lines first (under dots)
         connectLine(ctx, lm, JAWLINE, '#ff2222', vw, vh, false);
         connectLine(ctx, lm, LEFT_EYE, '#ff3333', vw, vh, true);
         connectLine(ctx, lm, RIGHT_EYE, '#ff3333', vw, vh, true);
         connectLine(ctx, lm, LEFT_BROW, '#ff4444', vw, vh, false);
         connectLine(ctx, lm, RIGHT_BROW, '#ff4444', vw, vh, false);
-        connectLine(ctx, lm, NOSE, '#ff4444', vw, vh, false);
-        // Dots on top
-        drawDots(ctx, lm, JAWLINE, '#ff2222', 4, vw, vh);
-        drawDots(ctx, lm, LEFT_EYE, '#ff3333', 2.5, vw, vh);
-        drawDots(ctx, lm, RIGHT_EYE, '#ff3333', 2.5, vw, vh);
-        drawDots(ctx, lm, LEFT_BROW, '#ff4444', 2, vw, vh);
-        drawDots(ctx, lm, RIGHT_BROW, '#ff4444', 2, vw, vh);
-        drawDots(ctx, lm, NOSE, '#ff4444', 2, vw, vh);
+        drawDots(ctx, lm, JAWLINE, '#ff2222', 3, vw, vh);
+        drawDots(ctx, lm, LEFT_EYE, '#ff3333', 2, vw, vh);
+        drawDots(ctx, lm, RIGHT_EYE, '#ff3333', 2, vw, vh);
       });
 
       runningRef.current = true;
