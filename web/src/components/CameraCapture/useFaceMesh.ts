@@ -1,7 +1,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 
-// Lower jawline (chin → cheeks)
-const JAWLINE = [152, 150, 149, 136, 172, 58, 132, 93, 234, 127, 377, 400, 379, 365, 397, 288, 361, 323, 454, 356];
+// Jawline angulaire : joue → angle mandibulaire → coin menton → menton → côté opposé
+// Lignes droites entre points clés = effet carré, pas ovale lissé
+const JAWLINE = [234, 172, 136, 150, 152, 379, 365, 397, 454];
 // Full eye contours
 const LEFT_EYE  = [33, 246, 161, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145, 144, 163, 7];
 const RIGHT_EYE = [362, 398, 384, 385, 386, 387, 388, 466, 263, 249, 390, 373, 374, 380, 381, 382];
