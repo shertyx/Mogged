@@ -1,11 +1,15 @@
 import { useEffect, useRef, useCallback } from 'react';
 
-// MediaPipe Face Mesh landmark indices — sparse points only
-// Lower jawline: chin + 6 pts each side
-const JAWLINE = [152, 150, 136, 172, 58, 234, 127, 377, 400, 379, 365, 454, 356];
-// Eye corners + top/bottom only (4 pts per eye)
-const LEFT_EYE  = [33, 133, 159, 145];
-const RIGHT_EYE = [362, 263, 386, 374];
+// Lower jawline (chin → cheeks)
+const JAWLINE = [152, 150, 149, 136, 172, 58, 132, 93, 234, 127, 377, 400, 379, 365, 397, 288, 361, 323, 454, 356];
+// Full eye contours
+const LEFT_EYE  = [33, 246, 161, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145, 144, 163, 7];
+const RIGHT_EYE = [362, 398, 384, 385, 386, 387, 388, 466, 263, 249, 390, 373, 374, 380, 381, 382];
+// Eyebrows
+const LEFT_BROW  = [70, 63, 105, 66, 107];
+const RIGHT_BROW = [336, 296, 334, 293, 300];
+// Nose bridge + tip
+const NOSE = [6, 197, 195, 4, 1, 2, 98, 327];
 
 type FaceMeshGlobal = {
   FaceMesh: new (opts: object) => {
@@ -18,6 +22,40 @@ type FaceMeshGlobal = {
 
 declare global {
   interface Window extends FaceMeshGlobal {}
+}
+
+function connectLine(
+  ctx: CanvasRenderingContext2D,
+  landmarks: { x: number; y: number }[],
+  indices: number[],
+  color: string,
+  vw: number,
+  vh: number,
+  closed = false,
+) {
+  const cw = ctx.canvas.width;
+  const ch = ctx.canvas.height;
+  const scale = Math.max(cw / vw, ch / vh);
+  const ox = (cw - vw * scale) / 2;
+  const oy = (ch - vh * scale) / 2;
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = 0.35;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 4;
+  ctx.beginPath();
+  indices.forEach((idx, i) => {
+    const lm = landmarks[idx];
+    if (!lm) return;
+    const x = cw - (lm.x * vw * scale + ox);
+    const y = lm.y * vh * scale + oy;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  if (closed) ctx.closePath();
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
 }
 
 function drawDots(
@@ -131,9 +169,20 @@ export function useFaceMesh(
         const vw = video.videoWidth || video.clientWidth;
         const vh = video.videoHeight || video.clientHeight;
 
-        drawDots(ctx, lm, JAWLINE, '#ff2222', 5, vw, vh);
-        drawDots(ctx, lm, LEFT_EYE, '#ff2222', 4, vw, vh);
-        drawDots(ctx, lm, RIGHT_EYE, '#ff2222', 4, vw, vh);
+        // Lines first (under dots)
+        connectLine(ctx, lm, JAWLINE, '#ff2222', vw, vh, false);
+        connectLine(ctx, lm, LEFT_EYE, '#ff3333', vw, vh, true);
+        connectLine(ctx, lm, RIGHT_EYE, '#ff3333', vw, vh, true);
+        connectLine(ctx, lm, LEFT_BROW, '#ff4444', vw, vh, false);
+        connectLine(ctx, lm, RIGHT_BROW, '#ff4444', vw, vh, false);
+        connectLine(ctx, lm, NOSE, '#ff4444', vw, vh, false);
+        // Dots on top
+        drawDots(ctx, lm, JAWLINE, '#ff2222', 4, vw, vh);
+        drawDots(ctx, lm, LEFT_EYE, '#ff3333', 2.5, vw, vh);
+        drawDots(ctx, lm, RIGHT_EYE, '#ff3333', 2.5, vw, vh);
+        drawDots(ctx, lm, LEFT_BROW, '#ff4444', 2, vw, vh);
+        drawDots(ctx, lm, RIGHT_BROW, '#ff4444', 2, vw, vh);
+        drawDots(ctx, lm, NOSE, '#ff4444', 2, vw, vh);
       });
 
       runningRef.current = true;
