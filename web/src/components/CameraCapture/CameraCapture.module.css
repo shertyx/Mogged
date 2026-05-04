@@ -49,16 +49,17 @@
   display: block;
 }
 
-.faceGuide {
+.videoMirror {
+  transform: scaleX(-1);
+}
+
+.landmarkCanvas {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -55%);
-  width: 55%;
-  aspect-ratio: 3/4;
-  border: 2px solid rgba(249, 115, 22, 0.5);
-  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
+  /* mirror to match video CSS scaleX(-1) — canvas coords are already flipped in JS */
 }
 
 .countdown {
@@ -122,6 +123,24 @@
 }
 
 .cancelBtn:hover { color: #fff; border-color: #444; }
+
+.importBtn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  color: #888;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.importBtn:hover { background: #222; color: #fff; }
 
 .confirmBtn {
   background: var(--orange);

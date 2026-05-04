@@ -1,5 +1,7 @@
 import { useRef, useEffect, useState } from 'react';
 import { captureAndAnalyze } from '@/api/face';
+import { MogMeter } from '@/components/MogMeter/MogMeter';
+import { useFaceMesh } from './useFaceMesh';
 import styles from './CameraCapture.module.css';
 
 export interface CaptureResult {
@@ -7,12 +9,14 @@ export interface CaptureResult {
   signed_url: string;
   chad_score: number;
   features: Record<string, number>;
+  zones?: Record<string, { cx: number; cy: number; rx: number; ry: number }>;
 }
 
 interface Props {
   onCapture: (result: CaptureResult) => void;
   onCancel: () => void;
   label?: string;
+  autoSubmit?: boolean; // soumet direct sans montrer le résultat interne
 }
 
 type Phase = 'preview' | 'captured' | 'analyzing' | 'done' | 'error';
@@ -31,14 +35,17 @@ function getScoreLabel(score: number): string {
   return '💀 MOGGED';
 }
 
-export function CameraCapture({ onCapture, onCancel, label }: Props) {
+export function CameraCapture({ onCapture, onCancel, label, autoSubmit }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [phase, setPhase] = useState<Phase>('preview');
   const [capturedUrl, setCapturedUrl] = useState<string | null>(null);
   const [result, setResult] = useState<CaptureResult | null>(null);
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState<number | null>(null);
+
+  useFaceMesh(videoRef, canvasRef, phase === 'preview');
 
   useEffect(() => {
     startCamera();
@@ -90,8 +97,6 @@ export function CameraCapture({ onCapture, onCancel, label }: Props) {
     canvas.width = video.videoWidth || 1280;
     canvas.height = video.videoHeight || 720;
     const ctx = canvas.getContext('2d')!;
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0);
     const url = canvas.toDataURL('image/jpeg', 0.92);
     setCapturedUrl(url);
@@ -111,8 +116,10 @@ export function CameraCapture({ onCapture, onCancel, label }: Props) {
         signed_url: res.signed_url || capturedUrl,
         chad_score: res.chad_score,
         features: res.features,
+        zones: res.features?.zones as unknown as Record<string, { cx: number; cy: number; rx: number; ry: number }>,
       };
       setResult(capture);
+      if (autoSubmit) { onCapture(capture); return; }
       setPhase('done');
     } catch (e: unknown) {
       setError((e as Error).message);
@@ -137,7 +144,9 @@ export function CameraCapture({ onCapture, onCancel, label }: Props) {
     setPhase('analyzing');
     try {
       const res = await captureAndAnalyze(file);
-      setResult({ photo_id: res.photo_id, signed_url: res.signed_url || url, chad_score: res.chad_score, features: res.features });
+      const capture = { photo_id: res.photo_id, signed_url: res.signed_url || url, chad_score: res.chad_score, features: res.features };
+      setResult(capture);
+      if (autoSubmit) { onCapture(capture); return; }
       setPhase('done');
     } catch (err: unknown) {
       setError((err as Error).message);
@@ -154,8 +163,8 @@ export function CameraCapture({ onCapture, onCancel, label }: Props) {
         {phase === 'preview' && (
           <>
             <div className={styles.viewfinder}>
-              <video ref={videoRef} className={styles.video} autoPlay playsInline muted />
-              <div className={styles.faceGuide} />
+              <video ref={videoRef} className={`${styles.video} ${styles.videoMirror}`} autoPlay playsInline muted />
+              <canvas ref={canvasRef} className={styles.landmarkCanvas} />
               {countdown !== null && (
                 <div className={styles.countdown}>{countdown}</div>
               )}
@@ -165,7 +174,10 @@ export function CameraCapture({ onCapture, onCancel, label }: Props) {
               <button className={styles.captureBtn} onClick={startCountdown} disabled={countdown !== null}>
                 <span className={styles.captureBtnInner} />
               </button>
-              <div style={{ width: 60 }} />
+              <label className={styles.importBtn} title="Importer une photo">
+                📁
+                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileInput} />
+              </label>
             </div>
           </>
         )}
@@ -189,15 +201,15 @@ export function CameraCapture({ onCapture, onCancel, label }: Props) {
         {phase === 'analyzing' && (
           <div className={styles.analyzing}>
             {capturedUrl && <img src={capturedUrl} className={styles.analyzeThumb} alt="" />}
-            <div className={styles.analyzeSpinner} />
-            <p className={styles.analyzeText}>ANALYSE EN COURS…</p>
-            <p className={styles.analyzeSubtext}>Détection jawline & symétrie</p>
+            <MogMeter analyzing={true} score={undefined} />
+            <p className={styles.analyzeSubtext}>Détection jawline & symétrie en cours…</p>
           </div>
         )}
 
         {/* Result */}
         {phase === 'done' && result && (
           <div className={styles.result}>
+            <MogMeter analyzing={false} score={result.chad_score} />
             <div className={styles.resultThumbWrap}>
               <img src={result.signed_url} className={styles.resultThumb} alt="capture" />
               <div className={styles.resultOverlay}>
